@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Latest compiled and minified CSS -->
+        <link
+          rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        />
+
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <!-- Popper JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+        <title>My scratchboard page</title>
+    </head>
+
+    <body>
+         <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+          <!-- Brand -->
+          <a class="navbar-brand" href="#">Navbar</a>
+
+          <!-- Toggler/collapsibe Button -->
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" aria-expanded="false" aria-controls="navbar">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <!-- Navbar links -->
+          <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+              </li>
+            </ul>
+			 </div>
+				<ul class="nav navbar-nav navbar-right">
+					{% if current_user.is_authenticated %}
+						<li><a href="{{ url_for('logout') }}">Log out</a></li>
+					{% else %}
+						<li><a href="{{ url_for('login') }}">Log in</a></li>
+					{% endif %}
+				</ul>
+			</div>
+          </div>
+        </nav>
+
+        <div class="container">
+			{% if current_user.is_authenticated %}
+				<div class="row">
+				<br>
+					<form action="." method="POST">
+						<textarea name="contents" placeholder="Enter a comment" class="form-control"></textarea>
+						<input type="submit" class="btn btn-success" value="Post comment">
+					</form>
+				</div>
+				<br>
+			{% endif %}
+			<br>
+            {% for comment in comments %}
+                <div class="row">
+                    {{ comment.content }}
+                </div>
+				<div>
+					<small>
+						Posted
+						{% if comment.commentTimeStamp %}
+							{{ comment.commentTimeStamp.strftime("%A, %d %B %Y at %H:%M") }}
+						{% else %}
+							at an unknown time
+						{% endif %}
+						{% if comment.commenter %}
+							{{ "by " + comment.commenter  }}
+						{% else %}
+						by unknown
+						{% endif %}
+					</small>
+				</div>	
+            {% endfor %}
+        </div>
+
+    </body>
+</html>
