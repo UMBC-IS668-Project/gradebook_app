@@ -69,7 +69,7 @@
 				<br>
 			{% endif %}
 			<br>
-            {% for comment in comments %}
+            {% for comment in commentDisplay %}
                 <div class="row">
                     {{ comment.content }}
                 </div>
@@ -81,9 +81,9 @@
 						{% else %}
 							at an unknown time
 						{% endif %}
-						{% if comment.commenterID %}
+						{% if comment.userName%}
 							{{ "by " }}
-							{{ (comment.commenterID) }}
+							{{ (comment.userName) }}
 						{% else %}
 						by unknown
 						{% endif %}

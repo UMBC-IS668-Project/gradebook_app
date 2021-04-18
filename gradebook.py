@@ -10,6 +10,7 @@ from mysql import connector
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
+app.debug = True
 
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
@@ -57,8 +58,7 @@ class Comment(db.Model):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":
-        return render_template("main_page.html", comments=Comment.query.all())
-
+        return render_template("main_page.html",commentDisplay=db.session.query(Comment.content, Comment.commenterID, Comment.commentTimeStamp, User.userName).select_from(Comment).join(User).all())
     if not current_user.is_authenticated:
         return redirect(url_for('index'))
 
