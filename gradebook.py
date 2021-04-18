@@ -2,13 +2,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import login_user, LoginManager, UserMixin, logout_user, login_required, current_user
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from mysql import connector
 
 
 app = Flask(__name__)
-app.config["DEBUG"] = True
 app.debug = True
 
 
@@ -80,6 +79,29 @@ def login():
 
     login_user(user)
     return redirect(url_for('index'))
+	
+@app.route("/create/", methods=["GET", "POST"])
+def create():
+    if request.method == "GET":
+        return render_template("create_login.html", error=False)
+	
+    if current_user.is_authenticated:
+        return render_template("create_login.html", current_user_error=True)
+
+    user = load_user(request.form["username"])
+    if user:
+        return render_template("create_login.html", duplicate_user_error=True)
+
+    if request.form.get("password") != request.form.get("password_confirm"):
+        return render_template("create_login.html", password_error=True)
+
+    entered_password = request.form["password"]
+    new_user = User(user_name=request.form["username"], password_hash = generate_password_hash(request.form["password"]))
+    db.session.add(new_user)
+    db.session.commit()	
+
+    login_user(new_user)
+    return render_template("create_login.html", account_success=True)
 
 @app.route("/logout/")
 @login_required
