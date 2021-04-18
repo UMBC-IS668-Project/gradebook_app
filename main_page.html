@@ -69,21 +69,21 @@
 				<br>
 			{% endif %}
 			<br>
-            {% for comment in commentDisplay %}
+            {% for comment in comment_display %}
                 <div class="row">
                     {{ comment.content }}
                 </div>
 				<div>
 					<small>
 						Posted
-						{% if comment.commentTimeStamp %}
-							{{ comment.commentTimeStamp.strftime("%A, %d %B %Y at %H:%M") }}
+						{% if comment.comment_time_stamp %}
+							{{ comment.comment_time_stamp.strftime("%A, %d %B %Y at %H:%M") }}
 						{% else %}
 							at an unknown time
 						{% endif %}
-						{% if comment.userName%}
+						{% if comment.user_name%}
 							{{ "by " }}
-							{{ (comment.userName) }}
+							{{ (comment.user_name) }}
 						{% else %}
 						by unknown
 						{% endif %}
