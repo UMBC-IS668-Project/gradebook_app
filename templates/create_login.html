@@ -18,29 +18,43 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 		<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.5.1/js/bootstrap.min.js"></script> -->
 		
-        <title>My scratchboard page: Login</title>
+        <title>My scratchboard page: Create Account</title>
     </head>
 
     <body>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-		  <a class="navbar-brand" href="#">My Scratchpad Login Page</a>
+		  <a class="navbar-brand" href="#">My Scratchpad Create Account Page</a>
 		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsible_navbar">
 			<span class="navbar-toggler-icon"></span>
 		  </button>
 		  <div class="collapse navbar-collapse" id="collapsible_navbar">
-				<div class="nav navbar-nav navbar-right mr-auto">
+			<ul class="navbar-nav">
+				<ul class="nav navbar-nav navbar-right">
 					{% if current_user.is_authenticated %}
 						<a class="nav-item nav-link mx-3 active" href="{{ url_for('logout') }}">Log out</a>
 					{% else %}
 						<a class="nav-item nav-link mx-3 active" href="{{ url_for('login') }}">Log in</a>
 						<a class="nav-item nav-link mx-3 active" href="{{ url_for('create') }}">Create account</a>
 					{% endif %}
-				</div>
+				</ul>
+			</ul>
 		  </div>  
 		</nav>
 
         <div class="container">
-
+			<div>
+				{% if current_user_error %}
+				<p>You are already logged in!</p>
+				{% elif duplicate_user_error %}
+				<p>Choose a different username!</p>
+				{% elif password_error %}
+				<p>Your passwords did not match!</p>
+				{% elif account_success %}
+				<p>Your account was added successfully!</p>
+				{% else %}
+				<p>Create an account below:</p>
+				{% endif %}
+			<div>
             <div class="row">
                 <form action="." method="POST">
                   <div class="form-group">
@@ -51,7 +65,11 @@
                     <label for="password">Password:</label>
                     <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
                   </div>
-                  <button type="submit" class="btn btn-success">Log in</button>
+                  <div class="form-group">
+                    <label for="confirm_password">Reenter Password:</label>
+                    <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Confirm your password">
+                  </div>
+                  <button type="submit" class="btn btn-success">Create Account</button>
                 </form>
             </div>
 
