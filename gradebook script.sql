@@ -26,63 +26,63 @@ USE gradebook ;
 DROP TABLE IF EXISTS  student ;
 
 CREATE TABLE IF NOT EXISTS student (
-  studentID INT NOT NULL COMMENT 'Artificial primary key.',
-  firstName VARCHAR(45) NOT NULL COMMENT 'The first name of the student.',
-  lastName VARCHAR(45) NOT NULL COMMENT 'The last name of the student.',
-  emailAddress VARCHAR(45) NULL COMMENT 'The email address of the student.',
+  student_ID INT NOT NULL COMMENT 'Artificial primary key.',
+  first_name VARCHAR(45) NOT NULL COMMENT 'The first name of the student.',
+  last_name VARCHAR(45) NOT NULL COMMENT 'The last name of the student.',
+  email_address VARCHAR(45) NULL COMMENT 'The email address of the student.',
   major VARCHAR(45) NULL COMMENT 'The school major of the student.',
- PRIMARY KEY ( studentID ))
+ PRIMARY KEY ( student_ID ))
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table  schoolClass 
+-- Table  school_class 
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS schoolClass ;
+DROP TABLE IF EXISTS school_class ;
 
-CREATE TABLE IF NOT EXISTS schoolClass (
-  classID INT NOT NULL,
-  className VARCHAR(45) NOT NULL COMMENT 'The name of the school class.',
+CREATE TABLE IF NOT EXISTS school_class (
+  class_ID INT NOT NULL,
+  class_name VARCHAR(45) NOT NULL COMMENT 'The name of the school class.',
   department VARCHAR(45) NULL COMMENT 'The department the class belongs in.',
- PRIMARY KEY ( classID ))
+ PRIMARY KEY ( class_ID ))
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table  schoolClassOffering 
+-- Table  school_class_offering 
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS schoolClassOffering ;
+DROP TABLE IF EXISTS school_class_offering ;
 
-CREATE TABLE IF NOT EXISTS  schoolClassOffering (
-  classID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
+CREATE TABLE IF NOT EXISTS  school_class_offering (
+  class_ID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
   semester VARCHAR(45) NOT NULL COMMENT 'The semester the class took place in.',
-  year INT NOT NULL COMMENT 'The year the class took place in.',
-  classOfferingID INT NOT NULL COMMENT 'Artificial primary key.',
- PRIMARY KEY (classOfferingID),
- CONSTRAINT classIDConstraint
-  FOREIGN KEY (classID)
-  REFERENCES schoolClass (classID)
+  class_year INT NOT NULL COMMENT 'The year the class took place in.',
+  class_offering_ID INT NOT NULL COMMENT 'Artificial primary key.',
+ PRIMARY KEY (class_offering_ID),
+ CONSTRAINT class_ID_constraint
+  FOREIGN KEY (class_ID)
+  REFERENCES school_class (class_ID)
 	ON UPDATE NO ACTION
 	ON DELETE NO ACTION)
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table  studentSchoolClassOffering 
+-- Table  student_school_class_offering 
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS  studentSchoolClassOffering;
+DROP TABLE IF EXISTS  student_school_class_offering;
 
-CREATE TABLE IF NOT EXISTS  studentSchoolClassOffering (
-  studentID INT NOT NULL COMMENT 'Foreign key from student table. Composite primary key.',
-  classOfferingID INT NOT NULL COMMENT 'Foreign key from schoolClassOffering table. Composite primary key.',
- PRIMARY KEY ( classOfferingID , studentID ),
- CONSTRAINT studentIDConstraint
-  FOREIGN KEY(studentID)
-  REFERENCES student(studentID)
+CREATE TABLE IF NOT EXISTS  student_school_class_offering (
+  student_ID INT NOT NULL COMMENT 'Foreign key from student table. Composite primary key.',
+  class_offering_ID INT NOT NULL COMMENT 'Foreign key from schoolClassOffering table. Composite primary key.',
+ PRIMARY KEY ( class_offering_ID , student_ID ),
+ CONSTRAINT student_ID_constraint
+  FOREIGN KEY(student_ID)
+  REFERENCES student(student_ID)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION,
- CONSTRAINT classOfferingIDConstraint
-  FOREIGN KEY(classOfferingID)
-  REFERENCES schoolClassOffering(classOfferingID)
+ CONSTRAINT class_offering_ID_constraint
+  FOREIGN KEY(class_offering_ID)
+  REFERENCES school_class_offering(class_offering_ID)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -93,13 +93,13 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS assignment;
 
 CREATE TABLE IF NOT EXISTS assignment (
-  assignmentID INT NOT NULL COMMENT 'Artificial primary key.',
-  assignmentName VARCHAR(45) NULL COMMENT 'The name of the assignment.',
-  classOfferingID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
- PRIMARY KEY (assignmentID),
- CONSTRAINT classOfferingIDAssignmentConstraint
-  FOREIGN KEY(classOfferingID)
-  REFERENCES schoolClassOffering(classOfferingID)
+  assignment_ID INT NOT NULL COMMENT 'Artificial primary key.',
+  assignment_name VARCHAR(45) NULL COMMENT 'The name of the assignment.',
+  class_offering_ID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
+ PRIMARY KEY (assignment_ID),
+ CONSTRAINT class_offering_ID_assignment_constraint
+  FOREIGN KEY(class_offering_ID)
+  REFERENCES school_class_offering(class_offering_ID)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -110,18 +110,19 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS  grade ;
 
 CREATE TABLE IF NOT EXISTS  grade (
-  assignmentID INT NOT NULL COMMENT 'Foreign key from assignment table. Part of composite primary key.',
-  studentID INT NOT NULL COMMENT 'Foreign key from student table. Part of composite primary key.',
-  grade FLOAT NULL COMMENT 'Store\'s a student\'s grade for an assignment',
- PRIMARY KEY ( assignmentID , studentID ),
- CONSTRAINT assignmentIDGradeConstraint
-  FOREIGN KEY(assignmentID)
-  REFERENCES  assignment(assignmentID)
+  grade_ID INT NOT NULL,
+  assignment_ID INT NOT NULL COMMENT 'Foreign key from assignment table. Part of composite primary key.',
+  student_ID INT NOT NULL COMMENT 'Foreign key from student table. Part of composite primary key.',
+  grade FLOAT NULL COMMENT 'Stores a student grade for an assignment',
+ PRIMARY KEY (grade_ID),
+ CONSTRAINT assignment_ID_grade_constraint
+  FOREIGN KEY(assignment_ID)
+  REFERENCES  assignment(assignment_ID)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION,
- CONSTRAINT studentIDGradeConstraint
-  FOREIGN KEY(studentID)
-  REFERENCES student(studentID)
+ CONSTRAINT student_ID_grade_constraint
+  FOREIGN KEY(student_ID)
+  REFERENCES student(student_ID)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION)
 ENGINE = InnoDB;
