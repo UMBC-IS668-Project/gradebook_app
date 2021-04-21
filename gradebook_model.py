@@ -1,3 +1,4 @@
+#Not in use currently. Whole server is in gradebook.py
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask import Flask, redirect, render_template, request, url_for
