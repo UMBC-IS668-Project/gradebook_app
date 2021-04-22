@@ -27,32 +27,11 @@ login_manager.init_app(app)
 migrate = Migrate(app, db)
 
 
-class User(UserMixin, db.Model):
-    __tablename__ = 'user'
-    user_id = db.Column(db.Integer, primary_key=True)
-    user_name = db.Column(db.String(128))
-    password_hash = db.Column(db.String(128))
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def get_id(self):
-        return self.user_name
-
-
 @login_manager.user_loader
 def load_user(entered_name):
     return User.query.filter_by(user_name=entered_name).first()
 
-
-class Comment(db.Model):
-    __tablename__ = "comment"
-    commenter_ID = db.Column(db.Integer, db.ForeignKey(User.user_id))
-    commentID = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(4096))
-    comment_time_stamp = db.Column(db.DateTime, default=datetime.now)
-    user_constraint = db.relationship('User', foreign_keys=commenter_ID)
-
+#Routes
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -117,3 +96,52 @@ def create():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+#Models
+    __tablename__ = 'user'
+    user_id = db.Column(db.Integer, primary_key = True)
+    user_name = db.Column(db.String(128))
+    password_hash = db.Column(db.String(128))
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        return(self.user_name)
+
+
+class Student(db.Model):
+
+    __tablename__ = "student"
+    student_ID = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(45))
+    last_name = db.Column(db.String(45))
+    email_address = db.Column(db.String(45))
+    major = db.Column(db.String(45))
+
+
+class Assignment(db.Model):
+
+    __tablename__
+    assignment_ID = db.Column(db.Integer, primary_key = True)
+    assignment_name = db.Column(db.String(128))
+
+
+class Grade(db.Model):
+
+    __tablename__
+    grade_ID = db.Column(db.Integer, primary_key = True)
+    assignment_ID = db.Column(db.Integer)
+    student_ID = db.Column(db.Integer)
+    grade = db.Column(db.Float)
+    assignment_ID_grade_constraint = db.relationship('assignment', foreign_keys = assignment_ID)
+    student_ID_grade_constraint = db.relationship('student', foreign_keys = student_ID)
+    
+ class Comment(db.Model):
+    
+    __tablename__ = "comment"
+    commenter_ID = db.Column(db.Integer, db.ForeignKey(User.user_id))
+    commentID = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(4096))
+    comment_time_stamp = db.Column(db.DateTime, default=datetime.now)
+    user_constraint = db.relationship('User', foreign_keys=commenter_ID)
