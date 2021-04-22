@@ -8,20 +8,20 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
 -- -----------------------------------------------------
--- Schema gradebook
+-- Schema gradebook_normal
 -- -----------------------------------------------------
 -- Gradebook schema for IS668 project
 
 -- -----------------------------------------------------
--- Schema gradebook
+-- Schema gradebook_normal
 --
 -- Gradebook schema for IS668 project
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS gradebook DEFAULT CHARACTER SET utf8 ;
-USE gradebook ;
+CREATE SCHEMA IF NOT EXISTS gradebook_normal DEFAULT CHARACTER SET utf8 ;
+USE gradebook_normal ;
 
 -- -----------------------------------------------------
--- Table  student
+-- Table  student 
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS  student ;
 
@@ -38,7 +38,6 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 -- Table  course
 -- -----------------------------------------------------
-/*
 DROP TABLE IF EXISTS course ;
 
 CREATE TABLE IF NOT EXISTS course (
@@ -46,11 +45,10 @@ CREATE TABLE IF NOT EXISTS course (
   course_name VARCHAR(45) NOT NULL COMMENT 'The name of the school class.',
  PRIMARY KEY ( course_ID ))
 ENGINE = InnoDB;
-*/
+
 -- -----------------------------------------------------
 -- Table  enrollment
 -- -----------------------------------------------------
-/*
 DROP TABLE IF EXISTS  course_offering;
 
 CREATE TABLE IF NOT EXISTS  course_offering (
@@ -65,11 +63,10 @@ CREATE TABLE IF NOT EXISTS  course_offering (
   ON DELETE NO ACTION
   ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-*/
+
 -- -----------------------------------------------------
 -- Table  enrollment
 -- -----------------------------------------------------
-/*
 DROP TABLE IF EXISTS  enrollment;
 
 CREATE TABLE IF NOT EXISTS  enrollment (
@@ -87,7 +84,7 @@ CREATE TABLE IF NOT EXISTS  enrollment (
   ON DELETE NO ACTION
   ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-*/
+
 -- -----------------------------------------------------
 -- Table  assignment
 -- -----------------------------------------------------
@@ -96,13 +93,13 @@ DROP TABLE IF EXISTS assignment;
 CREATE TABLE IF NOT EXISTS assignment (
   assignment_ID INT NOT NULL COMMENT 'Artificial primary key.',
   assignment_name VARCHAR(45) NULL COMMENT 'The name of the assignment.',
-  -- offering_ID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
- PRIMARY KEY (assignment_ID)) -- ,
- -- CONSTRAINT enrollment_assignment_constraint
-  -- FOREIGN KEY(offering_ID)
-  -- REFERENCES course_offering(offering_ID)
-  -- ON DELETE NO ACTION
-  -- ON UPDATE NO ACTION)
+  offering_ID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
+ PRIMARY KEY (assignment_ID),
+ CONSTRAINT enrollment_assignment_constraint
+  FOREIGN KEY(offering_ID)
+  REFERENCES course_offering(offering_ID)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
