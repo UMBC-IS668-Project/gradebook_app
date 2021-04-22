@@ -21,14 +21,6 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return(self.user_name)
 
-class Comment(db.Model):
-
-    __tablename__ = "comment"
-    commenter_ID = db.Column(db.Integer, db.ForeignKey(User.user_id))
-    comment_ID = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(4096))
-    comment_time_stamp = db.Column(db.DateTime, default=datetime.now)
-    user_constraint = db.relationship('User', foreign_keys=commenter_ID)
 
 class Student(db.Model):
 
@@ -39,38 +31,13 @@ class Student(db.Model):
     email_address = db.Column(db.String(45))
     major = db.Column(db.String(45))
 
-class School_Class(db.Model):
-
-    __tablename__ = "school_class"
-    class_ID = db.Column(db.Integer, primary_key=True)
-    class_name = db.Column(db.String(45))
-    department = db.Column(db.String(45))
-
-class School_Class_Offering(db.Model):
-
-    __tablename__ = "school_class_offering"
-    class_offering_ID = db.Column(db.Integer, primary_key = True)
-    class_ID = db.Column(db.Integer)
-    semester = db.Column(db.String(45))
-    class_year = db.Column(db.Integer)
-    class_ID_constraint = db.relationship('school_class', foreign_keys = class_ID)
-
-class Student_School_Class_Offering(db.Model):
-
-    __tablename__
-    student_school_class_offering_id = db.Column(db.Integer, primary_key = True)
-    class_offering_ID = db.Column(db.Integer)
-    student_ID = db.Column(db.Integer)
-    student_ID_constraint = db.relationship('student', foreign_keys = student_ID)
-    class_offering_ID_constraint = db.relationship('school_class_offering', foreign_keys = class_offering_id)
 
 class Assignment(db.Model):
 
     __tablename__
     assignment_ID = db.Column(db.Integer, primary_key = True)
     assignment_name = db.Column(db.String(128))
-    class_offering_ID = db.Column(db.Integer)
-    class_offering_ID_assignment_constraint = db.relationship('school_class_offering', foreign_keys = class_offering_ID)
+
 
 class Grade(db.Model):
 
