@@ -43,12 +43,12 @@ def index():
         #    Comment).join(User).order_by(desc(Comment.comment_time_stamp)))
 
     if not current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for("index"))
 
     # comment = Comment(content=request.form["contents"], commenter_ID=current_user.user_id)
     # db.session.add(comment)
     # db.session.commit()
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
 
 @app.route("/login/", methods=["GET", "POST"])
@@ -64,7 +64,7 @@ def login():
         return render_template("login_page.html", error=True)
 
     login_user(user)
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
 
 @app.route("/create/", methods=["GET", "POST"])
@@ -96,49 +96,105 @@ def create():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
 
-@app.route("/students")
+@app.route("/students/", methods=["GET"])
 # @login_required
 def student():
-    return render_template("students.html")
+    if request.method == "GET":
+        return render_template("students.html", student_display=Student.query.all())
+    else:
+        return redirect(url_for("index"))
 
 
-@app.route("/assignments")
+@app.route("/assignments/")
 # @login_required
 def assignment():
     return render_template("assignments.html")
 
 
-@app.route("/create_student")
+@app.route("/create_student/", methods=["GET", "POST"])
+@login_required
 def create_student():
-    return render_template("create_student.html")
+    if request.method == "GET":
+        return render_template("create_student.html")
+
+    new_student = Student()
+    new_student.first_name = request.form["first_name"]
+    new_student.last_name = request.form["last_name"]
+    new_student.email_address = request.form["email_address"]
+    new_student.major = request.form["major"]
+    db.session.add(new_student)
+    db.session.commit()
+
+    return render_template("create_student.html", create_success=True)
 
 
-@app.route("/student_grades")
+@app.route("/edit_student/<int:edit_ID>", methods=["GET", "POST"])
+@login_required
+def edit_student():
+    if request.method == "GET":
+        return render_template("edit_student.html")
+
+    new_student = Student()
+    new_student.first_name = request.form["first_name"]
+    new_student.last_name = request.form["last_name"]
+    new_student.email_address = request.form["email_address"]
+    new_student.major = request.form["major"]
+    db.session.add(new_student)
+    db.session.commit()
+
+    return render_template("edit_student.html", create_success=True)
+
+@app.route("/delete_student/", methods=["GET", "POST"])
+@app.route("/delete_student/<delete_ID>", methods=["GET", "POST"])
+@login_required
+def delete_student(delete_ID=None):
+    if request.method == "GET":
+        if delete_ID is not None:
+            return render_template("delete_student.html", student_display=db.session.query(Student.student_ID,
+                                                                                       Student.first_name,
+                                                                                       Student.last_name,
+                                                                                       Student.email_address,
+                                                                                       Student.major)
+                               .select_from(Student).filter(Student.student_ID == delete_ID).first())
+        else:
+            return render_template("delete_student.html", student_display="")
+
+    del_student = Student.query.filter_by(student_ID=delete_ID).first()
+    if del_student is None:
+        return render_template("delete_student.html", delete_fail =True)
+    db.session.delete(del_student)
+    db.session.commit()
+
+    return render_template("delete_student.html", delete_success=True)
+    # return redirect(url_for("student"))
+
+
+@app.route("/student_grades/", methods=["GET", "POST"])
 def student_grades():
     return render_template("student_grades.html")
 
 
-@app.route("/create_assignment")
+@app.route("/create_assignment/")
 def create_assignment():
     return render_template("create_assignment.html")
 
 
-@app.route("/create_grade")
+@app.route("/create_grade/")
 def create_grade():
     return render_template("create_grade")
 
 
-@app.route("/edit_grade")
+@app.route("/edit_grade/")
 def edit_grade():
     return render_template("edit_grade.html")
 
 
 # Models
 class User(UserMixin, db.Model):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     user_id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
@@ -168,8 +224,8 @@ class Assignment(db.Model):
 class Grade(db.Model):
     __tablename__ = "grade"
     # grade_ID = db.Column(db.Integer, primary_key=True) Artificial primary key, not currently used.
-    assignment_ID = db.Column(db.Integer, primary_key=True)
-    student_ID = db.Column(db.Integer, primary_key=True)
+    assignment_ID = db.Column(db.Integer, db.ForeignKey(Assignment.assignment_ID), primary_key=True)
+    student_ID = db.Column(db.Integer, db.ForeignKey(Student.student_ID), primary_key=True)
     grade = db.Column(db.Float)
-    assignment_grade_constraint = db.relationship('assignment', foreign_keys=assignment_ID)
-    student_grade_constraint = db.relationship('student', foreign_keys=student_ID)
+    assignment_grade_constraint = db.relationship("Assignment", foreign_keys=assignment_ID)
+    student_grade_constraint = db.relationship("Student", foreign_keys=student_ID)
