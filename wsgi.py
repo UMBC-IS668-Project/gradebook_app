@@ -8,7 +8,7 @@
 import sys
 
 # add your project directory to the sys.path
-project_home = 'C:\\Users\\stoandel\\Documents\\Python Scripts\\flaskProject'
+project_home = 'C:\\Users\\stoandel\\Documents\\PythonProgramming\\flaskProject'
 if project_home not in sys.path:
     sys.path = [project_home] + sys.path
 
