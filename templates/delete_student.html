@@ -6,7 +6,7 @@
 
         <!--Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
-        <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+        <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
         -->
 		<!-- jQuery library -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -18,12 +18,12 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 		<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.5.1/js/bootstrap.min.js"></script> -->
 		
-        <title>My scratchboard page: Create Account</title>
+        <title>Gradebook: Delete A Student</title>
     </head>
 
     <body>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-		  <a class="navbar-brand" href= "{ url_for('index') }}">My Scratchpad Create Account Page</a>
+		  <a class="navbar-brand" href= "{{ url_for('index') }}">Gradebook: delete a student</a>
 		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsible_navbar">
 			<span class="navbar-toggler-icon"></span>
 		  </button>
@@ -42,35 +42,38 @@
 
         <div class="container">
 			<div>
-				{% if current_user_error %}
-				<p>You are already logged in!</p>
-				{% elif duplicate_user_error %}
-				<p>Choose a different username!</p>
-				{% elif password_error %}
-				<p>Your passwords did not match!</p>
-				{% elif account_success %}
-				<p>Your account was added successfully!</p>
+				{% if current_user.is_authenticated %}
+            </div>
+            <div>
+                <a href="{{ url_for('student') }}">Return to Students</a>
+                {% if delete_success %}
+                    <p>The student was deleted successfully!</p>
+                {% elif delete_fail %}
+                    <p>Nothing to delete!</p>
 				{% else %}
-				<p>Create an account below:</p>
+				    <p>Delete the student entry below:</p>
 				{% endif %}
             </div>
+            {% if not student_display %}
+                <br>
+            {% else %}
+                <ul>
+                    <li>Student ID: {{ student_display.student_ID }}</li>
+                    <li>First Name: {{ student_display.first_name }}</li>
+                    <li>Last Name: {{ student_display.last_name }}</li>
+                    <li>Email Address: {{ student_display.email_address }}</li>
+                    <li>Major: {{ student_display.major }}</li>
+                </ul>
+            {% endif %}
             <div class="row">
-                <form action="." method="POST">
-                  <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input class="form-control" id="username" name="username" placeholder="Enter your username">
-                  </div>
-                  <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
-                  </div>
-                  <div class="form-group">
-                    <label for="password_confirm">Reenter Password:</label>
-                    <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Confirm your password">
-                  </div>
-                  <button type="submit" class="btn btn-success">Create Account</button>
+                <form action='' method="POST">
+                  <button type="submit" class="btn btn-success" value="YES">Delete Student</button>
+                    <a href="{{url_for('student')}}">Cancel</a>
                 </form>
+                <br>
             </div>
+            {% endif %}
         </div>
+
     </body>
 </html>
