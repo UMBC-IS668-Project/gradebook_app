@@ -26,7 +26,7 @@ USE gradebook ;
 DROP TABLE IF EXISTS  student ;
 
 CREATE TABLE IF NOT EXISTS student (
-  student_ID INT NOT NULL COMMENT 'Artificial primary key.',
+  student_ID INT AUTO_INCREMENT NOT NULL COMMENT 'Artificial primary key.',
   first_name VARCHAR(45) NOT NULL COMMENT 'The first name of the student.',
   last_name VARCHAR(45) NOT NULL COMMENT 'The last name of the student.',
   email_address VARCHAR(45) NULL COMMENT 'The email address of the student.',
@@ -34,7 +34,18 @@ CREATE TABLE IF NOT EXISTS student (
  PRIMARY KEY ( student_ID ))
 ENGINE = InnoDB;
 
-
+-- -----------------------------------------------------
+-- Table  user
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS  user ;
+              
+CREATE TABLE IF NOT EXISTS user (
+  user_ID INT AUTO_INCREMENT NOT NULL,
+  user_name VARCHAR(128) NOT NULL,
+  password_hash VARCHAR(128) NOT NULL,
+ PRIMARY KEY ( user_ID ))
+ENGINE = InnoDB;
+              
 -- -----------------------------------------------------
 -- Table  course
 -- -----------------------------------------------------
@@ -42,7 +53,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS course ;
 
 CREATE TABLE IF NOT EXISTS course (
-  course_ID INT NOT NULL,
+  course_ID INT AUTO_INCREMENT NOT NULL,
   course_name VARCHAR(45) NOT NULL COMMENT 'The name of the school class.',
  PRIMARY KEY ( course_ID ))
 ENGINE = InnoDB;
@@ -54,7 +65,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS  course_offering;
 
 CREATE TABLE IF NOT EXISTS  course_offering (
-  offering_ID INT NOT NULL COMMENT 'Artificial primary key',
+  offering_ID INT AUTO_INCREMENT NOT NULL COMMENT 'Artificial primary key',
   course_ID INT NOT NULL COMMENT 'Foreign key from course table. Composite primary key.',
   course_year INT,
   semester VARCHAR(45),
@@ -94,7 +105,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS assignment;
 
 CREATE TABLE IF NOT EXISTS assignment (
-  assignment_ID INT NOT NULL COMMENT 'Artificial primary key.',
+  assignment_ID INT AUTO_INCREMENT NOT NULL COMMENT 'Artificial primary key.',
   assignment_name VARCHAR(45) NULL COMMENT 'The name of the assignment.',
   -- offering_ID INT NOT NULL COMMENT 'Foreign key from schoolClass table.',
  PRIMARY KEY (assignment_ID)) -- ,
