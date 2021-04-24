@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import desc
+from sqlalchemy import update
 from flask_migrate import Migrate
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import login_user, LoginManager, UserMixin, logout_user, login_required, current_user
@@ -130,22 +130,34 @@ def create_student():
 
     return render_template("create_student.html", create_success=True)
 
-
+@app.route("/edit_student/", methods=["GET", "POST"])
 @app.route("/edit_student/<int:edit_ID>", methods=["GET", "POST"])
 @login_required
-def edit_student():
+def edit_student(edit_ID=None):
     if request.method == "GET":
-        return render_template("edit_student.html")
+        if edit_ID is not None:
+            return render_template("edit_student.html", student_display=db.session.query(Student.student_ID,
+                                                                                       Student.first_name,
+                                                                                       Student.last_name,
+                                                                                       Student.email_address,
+                                                                                       Student.major)
+                               .select_from(Student).filter(Student.student_ID == edit_ID).first())
+        else:
+            return render_template("edit_student.html", student_display="")
 
-    new_student = Student()
-    new_student.first_name = request.form["first_name"]
-    new_student.last_name = request.form["last_name"]
-    new_student.email_address = request.form["email_address"]
-    new_student.major = request.form["major"]
-    db.session.add(new_student)
+    ed_student = Student.query.filter_by(student_ID=edit_ID).first()
+    if ed_student is None:
+        return render_template("edit_student.html", edit_fail=True)
+
+    ed_student.first_name = request.form["first_name"]
+    ed_student.last_name = request.form["last_name"]
+    ed_student.email_address = request.form["email_address"]
+    ed_student.major = request.form["major"]
+    db.session.add(ed_student)
     db.session.commit()
 
-    return render_template("edit_student.html", create_success=True)
+    return render_template("edit_student.html", edit_success=True)
+
 
 @app.route("/delete_student/", methods=["GET", "POST"])
 @app.route("/delete_student/<delete_ID>", methods=["GET", "POST"])
@@ -164,7 +176,7 @@ def delete_student(delete_ID=None):
 
     del_student = Student.query.filter_by(student_ID=delete_ID).first()
     if del_student is None:
-        return render_template("delete_student.html", delete_fail =True)
+        return render_template("delete_student.html", delete_fail=True)
     db.session.delete(del_student)
     db.session.commit()
 
