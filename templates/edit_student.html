@@ -18,12 +18,12 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 		<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.5.1/js/bootstrap.min.js"></script> -->
 		
-        <title>Gradebook: Delete A Student</title>
+        <title>Gradebook: Edit A Student</title>
     </head>
 
     <body>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
-		  <a class="navbar-brand" href= "{{ url_for('index') }}">Gradebook: delete a student</a>
+		  <a class="navbar-brand" href= "{{ url_for('index') }}">Gradebook: edit a student</a>
 		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsible_navbar">
 			<span class="navbar-toggler-icon"></span>
 		  </button>
@@ -43,34 +43,44 @@
         <div class="container">
 			<div>
 				{% if current_user.is_authenticated %}
-            </div>
             <div>
                 <a href="{{ url_for('student') }}">Return to Students</a>
-                {% if delete_success %}
-                    <p>The student was deleted successfully!</p>
-                {% elif delete_fail %}
-                    <p>Nothing to delete!</p>
+                {% if edit_success %}
+                    <p>The student was edited successfully!</p>
+                {% elif edit_fail %}
+                    <p>Nothing to edit!</p>
 				{% else %}
-				    <p>Delete the student entry below:</p>
+				    <p>Edit the student entry below:</p>
 				{% endif %}
             </div>
             {% if not student_display %}
                 <br>
             {% else %}
-                <ul>
-                    <li>Student ID: {{ student_display.student_ID }}</li>
-                    <li>First Name: {{ student_display.first_name }}</li>
-                    <li>Last Name: {{ student_display.last_name }}</li>
-                    <li>Email Address: {{ student_display.email_address }}</li>
-                    <li>Major: {{ student_display.major }}</li>
-                </ul>
+                <p> Student ID: {{ student_display.student_ID }}</p>
             <div class="row">
-                <form action='' method="POST">
-                  <button type="submit" class="btn btn-success" value="YES">Delete Student</button>
+                <form action="" method="POST">
+                  <div class="form-group">
+                    <label for="first_name">First Name:</label>
+                    <input class="form-control" id="first_name" name="first_name" value="{{ student_display.first_name }}">
+                  </div>
+                  <div class="form-group">
+                    <label for="last_name">Last Name:</label>
+                    <input class="form-control" id="last_name" name="last_name" value="{{ student_display.last_name }}">
+                  </div>
+                  <div class="form-group">
+                    <label for="email_address">Email Address:</label>
+                    <input class="form-control" id="email_address" name="email_address" value="{{ student_display.email_address }}">
+                  </div>
+                    <div class="form-group">
+                    <label for="major">Major:</label>
+                    <input class="form-control" id="major" name="major" value="{{ student_display.major }}">
+                  </div>
+                  <button type="submit" class="btn btn-success" value="YES">Edit Student</button>
                     <a href="{{url_for('student')}}">Cancel</a>
                 </form>
-                <br>
-                {% endif %}
+                </form>
+            </div>
+            {% endif %}
             </div>
             {% endif %}
         </div>
