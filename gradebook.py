@@ -11,8 +11,8 @@ app = Flask(__name__)
 app.debug = True
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
-    username="flaskuser",
-    password="dersAGef3rover",
+    username="",
+    password="",
     hostname="127.0.0.1",
     databasename="gradebook",
 )
@@ -21,7 +21,7 @@ app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-app.secret_key = "un34dersAGef3roverhe35rald"
+app.secret_key = ""
 login_manager = LoginManager()
 login_manager.init_app(app)
 migrate = Migrate(app, db)
@@ -37,17 +37,8 @@ def load_user(entered_name):
 def index():
     if request.method == "GET":
         return render_template("main_page.html")
-        # return render_template("main_page.html", comment_display=db.session.query(Comment.content, Comment.commenter_ID,
-        #                                                                          Comment.comment_time_stamp,
-        #                                                                          User.user_name).select_from(
-        #    Comment).join(User).order_by(desc(Comment.comment_time_stamp)))
-
     if not current_user.is_authenticated:
         return redirect(url_for("index"))
-
-    # comment = Comment(content=request.form["contents"], commenter_ID=current_user.user_id)
-    # db.session.add(comment)
-    # db.session.commit()
     return redirect(url_for("index"))
 
 
@@ -100,7 +91,7 @@ def logout():
 
 
 @app.route("/students/", methods=["GET"])
-# @login_required
+@login_required
 def student():
     if request.method == "GET":
         return render_template("students.html", student_display=Student.query.all())
@@ -109,7 +100,7 @@ def student():
 
 
 @app.route("/assignments/")
-# @login_required
+@login_required
 def assignment():
     return render_template("assignments.html")
 
@@ -130,18 +121,21 @@ def create_student():
 
     return render_template("create_student.html", create_success=True)
 
+
 @app.route("/edit_student/", methods=["GET", "POST"])
 @app.route("/edit_student/<int:edit_ID>", methods=["GET", "POST"])
 @login_required
 def edit_student(edit_ID=None):
     if request.method == "GET":
         if edit_ID is not None:
-            return render_template("edit_student.html", student_display=db.session.query(Student.student_ID,
-                                                                                       Student.first_name,
-                                                                                       Student.last_name,
-                                                                                       Student.email_address,
-                                                                                       Student.major)
-                               .select_from(Student).filter(Student.student_ID == edit_ID).first())
+            student_return = db.session.query(
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name,
+                Student.email_address,
+                Student.major).select_from(Student).filter(Student.student_ID == edit_ID).first()
+
+            return render_template("edit_student.html", student_display=student_return)
         else:
             return render_template("edit_student.html", student_display="")
 
@@ -165,12 +159,15 @@ def edit_student(edit_ID=None):
 def delete_student(delete_ID=None):
     if request.method == "GET":
         if delete_ID is not None:
-            return render_template("delete_student.html", student_display=db.session.query(Student.student_ID,
-                                                                                       Student.first_name,
-                                                                                       Student.last_name,
-                                                                                       Student.email_address,
-                                                                                       Student.major)
-                               .select_from(Student).filter(Student.student_ID == delete_ID).first())
+            student_return = db.session.query(
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name,
+                Student.email_address,
+                Student.major).select_from(
+                Student).filter(Student.student_ID == delete_ID).first()
+
+            return render_template("delete_student.html", student_display=student_return)
         else:
             return render_template("delete_student.html", student_display="")
 
