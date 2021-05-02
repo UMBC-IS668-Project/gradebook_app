@@ -99,10 +99,13 @@ def student():
         return redirect(url_for("index"))
 
 
-@app.route("/assignments/")
+@app.route("/assignments/", methods=["GET"])
 @login_required
 def assignment():
-    return render_template("assignments.html")
+    if request.method == "GET":
+        return render_template("assignments.html", assignment_display=Assignment.query.all())
+    else:
+        return redirect(url_for("index"))
 
 
 @app.route("/create_student/", methods=["GET", "POST"])
@@ -178,7 +181,6 @@ def delete_student(delete_ID=None):
     db.session.commit()
 
     return render_template("delete_student.html", delete_success=True)
-    # return redirect(url_for("student"))
 
 
 @app.route("/student_grades/", methods=["GET", "POST"])
@@ -186,9 +188,68 @@ def student_grades():
     return render_template("student_grades.html")
 
 
-@app.route("/create_assignment/")
+@app.route("/create_assignment/", methods=["GET", "POST"])
+@login_required
 def create_assignment():
-    return render_template("create_assignment.html")
+    if request.method == "GET":
+        return render_template("create_assignment.html")
+
+    new_assignment = Assignment()
+    new_assignment.assignment_name = request.form["assignment_name"]
+    db.session.add(new_assignment)
+    db.session.commit()
+
+    return render_template("create_assignment.html", create_success=True)
+
+
+@app.route("/edit_assignment/", methods=["GET", "POST"])
+@app.route("/edit_assignment/<int:edit_ID>", methods=["GET", "POST"])
+@login_required
+def edit_assignment(edit_ID=None):
+    if request.method == "GET":
+        if edit_ID is not None:
+            assignment_return = db.session.query(
+                Assignment.assignment_ID,
+                Assignment.assignment_name
+                ).select_from(Assignment).filter(Assignment.assignment_ID == edit_ID).first()
+
+            return render_template("edit_assignment.html", assignment_display=assignment_return)
+        else:
+            return render_template("edit_assignment.html", assignment_display="")
+
+    ed_assignment = Assignment.query.filter_by(assignment_ID=edit_ID).first()
+    if ed_assignment is None:
+        return render_template("edit_assignment.html", edit_fail=True)
+
+    ed_assignment.assignment_name = request.form["assignment_name"]
+    db.session.add(ed_assignment)
+    db.session.commit()
+
+    return render_template("edit_assignment.html", edit_success=True)
+
+
+@app.route("/delete_assignment/", methods=["GET", "POST"])
+@app.route("/delete_assignment/<delete_ID>", methods=["GET", "POST"])
+@login_required
+def delete_assignment(delete_ID=None):
+    if request.method == "GET":
+        if delete_ID is not None:
+            assignment_return = db.session.query(
+                Assignment.assignment_ID,
+                Assignment.assignment_name).select_from(
+                Assignment).filter(Assignment.assignment_ID == delete_ID).first()
+
+            return render_template("delete_assignment.html", assignment_display=assignment_return)
+        else:
+            return render_template("delete_assignment.html", assignment_display="")
+
+    del_assignment = Assignment.query.filter_by(assignment_ID=delete_ID).first()
+    if del_assignment is None:
+        return render_template("delete_assignment.html", delete_fail=True)
+    db.session.delete(del_assignment)
+    db.session.commit()
+
+    return render_template("delete_assignment.html", delete_success=True)
 
 
 @app.route("/create_grade/")
