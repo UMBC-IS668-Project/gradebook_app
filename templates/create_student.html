@@ -47,10 +47,9 @@
             <div>
                 <a href="{{ url_for('student') }}">Return to Students</a>
                 {% if create_success %}
-                <p>The student was added successfully!</p>
-				{% else %}
-				<p>Create a student entry below:</p>
+                    <p>The student was added successfully!</p>
 				{% endif %}
+                <p>Create a student entry below:</p>
             </div>
             <div class="row">
                 <form action="." method="POST">

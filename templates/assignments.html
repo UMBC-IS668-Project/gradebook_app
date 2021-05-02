@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <!--Latest compiled and minified CSS -->
-        <link rel="stylesheet"href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
         <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
         -->
 		<!-- jQuery library -->
@@ -18,13 +18,13 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 		<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.5.1/js/bootstrap.min.js"></script> -->
 		
-        <title>Gradebook Index</title>
+        <title>Assignments</title>
     </head>
 
     <body>
 		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
 		
-		  <a class="navbar-brand" href= {{ url_for('index') }}>Gradebook</a>
+		  <a class="navbar-brand" href= "{{ url_for('index') }}">Gradebook: assignments</a>
 		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsible_navbar">
 			<span class="navbar-toggler-icon"></span>
 		  </button>
@@ -42,11 +42,36 @@
 		</nav>
 
         <div class="container">
-			<ul>
-				<li><a href="{{ url_for('student') }}">View Students</a></li>
-				<li><a href="{{ url_for('assignment') }}">View Assignments</a></li>
-			</ul>
-        </div>
+			{% if current_user.is_authenticated %}
+            <div>
+                {% if alert == "create_success" %}
+                <p>The assignment was added successfully!</p>
+				{% elif alert == "delete_success" %}
+				<p>The assignment was deleted successfully!:</p>
+				{% else %}
+					<br>
+				{% endif %}
+            </div>
+				<a href="{{ url_for('create_assignment') }}">Create a new assignment</a>
+					<table class="table table-striped">
+						<thead>
+							<th>Assignment ID</th>
+							<th>Assignment Name</th>
+						</thead>
+						<tbody>
+							{% for assignment in assignment_display %}
+							<tr>
+								<td>{{ assignment.assignment_ID }}</td>
+								<td>{{ assignment.assignment_name }}</td>
+								<td><a href="{{ url_for('student_grades') }}">Grades</a></td>
+								<td><a href="{{ url_for('edit_assignment', edit_ID = assignment.assignment_ID) }}">Edit</a></td>
+								<td><a href = "{{ url_for('delete_assignment' ,delete_ID = assignment.assignment_ID) }}">Delete</a></td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+			{% endif %}
+		</div>
 
     </body>
 </html>
