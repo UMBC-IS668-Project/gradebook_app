@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import update
 from flask_migrate import Migrate
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import login_user, LoginManager, UserMixin, logout_user, login_required, current_user
@@ -183,9 +182,33 @@ def delete_student(delete_ID=None):
     return render_template("delete_student.html", delete_success=True)
 
 
-@app.route("/student_grades/", methods=["GET", "POST"])
-def student_grades():
-    return render_template("student_grades.html")
+@app.route("/assignment_grades/", methods=["GET"])
+@app.route("/assignment_grades/<assign_get_ID>", methods=["GET"])
+@login_required
+def assignment_grades(assign_get_ID= None):
+    if request.method == "GET":
+        grade_return_inner = db.session.query(Student.student_ID, Grade.grade, Assignment.assignment_ID,
+            Assignment.assignment_name).select_from(Student).join(Grade).\
+            join(Assignment).filter_by(assignment_ID=assign_get_ID).subquery()
+
+        assign_get = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name
+            ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
+
+        grade_return = db.session.query(
+            grade_return_inner.c.assignment_ID,
+            grade_return_inner.c.assignment_name,
+            grade_return_inner.c.grade,
+            Student.student_ID,
+            Student.first_name,
+            Student.last_name
+            ).select_from(Student).join(grade_return_inner, grade_return_inner.c.student_ID ==
+                Student.student_ID, isouter=True)
+
+        return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=assign_get)
+    else:
+        return redirect(url_for("index"))
 
 
 @app.route("/create_assignment/", methods=["GET", "POST"])
@@ -251,10 +274,62 @@ def delete_assignment(delete_ID=None):
 
     return render_template("delete_assignment.html", delete_success=True)
 
+# This function does not work currently
+@app.route("/student_grades/", methods=["GET"])
+@app.route("/student_grades/<student_get_ID>", methods=["GET"])
+@login_required
+def student_grades(student_get_ID= None):
+    if request.method == "GET":
+        grade_return = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name,
+            Grade.student_ID,
+            Grade.grade,
+            Student.first_name,
+            Student.last_name
+            ).select_from(Assignment).join(Grade).join(Student).filter(Student.student_ID == student_get_ID)
 
-@app.route("/create_grade/")
-def create_grade():
-    return render_template("create_grade")
+        student_get = db.session.query(
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name
+                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
+
+        return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=student_get)
+    else:
+        return redirect(url_for("index"))
+
+
+@app.route("/create_grade/", methods=["GET"])
+@app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
+def create_grade(assign_get_ID=None, student_get_ID=None, ugh_ID=None):
+    if request.method == "GET":
+        if assign_get_ID is not None and student_get_ID is not None:
+            assign_return = db.session.query(
+                Assignment.assignment_ID,
+                Assignment.assignment_name,
+                ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
+
+            student_return = db.session.query(
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name
+                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
+
+            return render_template("create_grade.html", assignment_display=assign_return,
+                                   student_display=student_return)
+        else:
+            return render_template("create_grade.html", assignment_display="", student_display="", no_ID_error=True)
+
+    new_grade = Grade()
+    new_grade.grade = request.form["grade"]
+    new_grade.assignment_ID = assign_get_ID
+    new_grade.student_ID = student_get_ID
+    db.session.add(new_grade)
+    db.session.commit()
+    # Can't get this to go back to create_grade without weirdly dropping a URL parameter.
+    # Can't get this to go back to assignment_grades without the assignment ID, which was giving a routing error
+    return redirect(url_for("assignment"))
 
 
 @app.route("/edit_grade/")
