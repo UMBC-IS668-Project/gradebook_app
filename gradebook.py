@@ -93,7 +93,22 @@ def logout():
 @login_required
 def student():
     if request.method == "GET":
-        return render_template("students.html", student_display=Student.query.all())
+        # Subquery to get aggregate grade for students, assuming equal weighting.
+        student_return_inner = db.session.query(
+            Student.student_ID,
+            (db.func.round((db.func.sum(Grade.grade)/db.func.count(Grade.grade)),3)).label(
+             "agg_grade")).select_from(Student).join(Grade).group_by(Student.student_ID).subquery()
+
+        student_return = db.session.query(
+            Student.student_ID,
+            Student.first_name,
+            Student.last_name,
+            Student.major,
+            Student.email_address,
+            student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
+                student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
+
+        return render_template("students.html", student_display=student_return)
     else:
         return redirect(url_for("index"))
 
@@ -204,7 +219,7 @@ def assignment_grades(assign_get_ID= None):
             Student.first_name,
             Student.last_name
             ).select_from(Student).join(grade_return_inner, grade_return_inner.c.student_ID ==
-                Student.student_ID, isouter=True)
+                Student.student_ID, isouter=True).order_by(Student.first_name)
 
         return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=assign_get)
     else:
@@ -274,7 +289,7 @@ def delete_assignment(delete_ID=None):
 
     return render_template("delete_assignment.html", delete_success=True)
 
-# This function does not work currently
+
 @app.route("/student_grades/", methods=["GET"])
 @app.route("/student_grades/<student_get_ID>", methods=["GET"])
 @login_required
@@ -292,17 +307,19 @@ def student_grades(student_get_ID= None):
         student_get = db.session.query(
                 Student.student_ID,
                 Student.first_name,
-                Student.last_name
+                Student.last_name,
+                Student.major,
+                Student.email_address
                 ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
 
-        return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=student_get)
+        return render_template("student_grades.html", grade_display=grade_return, student_display=student_get)
     else:
         return redirect(url_for("index"))
 
 
 @app.route("/create_grade/", methods=["GET"])
 @app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
-def create_grade(assign_get_ID=None, student_get_ID=None, ugh_ID=None):
+def create_grade(assign_get_ID=None, student_get_ID=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
             assign_return = db.session.query(
@@ -332,9 +349,66 @@ def create_grade(assign_get_ID=None, student_get_ID=None, ugh_ID=None):
     return redirect(url_for("assignment"))
 
 
-@app.route("/edit_grade/")
-def edit_grade():
-    return render_template("edit_grade.html")
+@app.route("/edit_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
+def edit_grade(assign_get_ID=None, student_get_ID=None):
+    if request.method == "GET":
+        if assign_get_ID is not None and student_get_ID is not None:
+            grade_return = db.session.query(
+                Assignment.assignment_ID,
+                Assignment.assignment_name,
+                Grade.grade,
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name
+                ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID,
+                                                 Grade.student_ID == student_get_ID,
+                                                 Grade.student_ID == Student.student_ID,
+                                                 Grade.assignment_ID == Assignment.assignment_ID).first()
+
+            return render_template("edit_grade.html", grade_display=grade_return)
+        else:
+            return render_template("edit_grade.html", grade_display="", no_ID_error=True)
+
+    ed_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
+    if ed_grade is None:
+        return render_template("edit_grade.html", edit_fail=True)
+
+    ed_grade.grade = request.form["grade"]
+    db.session.add(ed_grade)
+    db.session.commit()
+
+    # Can't get this to go back to edit_grade without weirdly dropping a URL parameter.
+    # Can't get this to go back to assignment_grades without the assignment ID, which was giving a routing error
+    return redirect(url_for("assignment"))
+
+
+@app.route("/delete_grade/", methods=["GET", "POST"])
+@app.route("/delete_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
+@login_required
+def delete_grade(assign_get_ID=None, student_get_ID=None):
+    if request.method == "GET":
+        if assign_get_ID is not None and student_get_ID is not None:
+            grade_return = db.session.query(
+                Assignment.assignment_ID,
+                Assignment.assignment_name,
+                Grade.grade,
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name
+                ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID,
+                                                 Student.student_ID == student_get_ID).first()
+
+            return render_template("delete_grade.html", grade_display=grade_return)
+        else:
+            return render_template("delete_grade.html", grade_display="", no_ID_error=True)
+
+    del_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
+    if del_grade is None:
+        return render_template("delete_assignment.html", delete_fail=True)
+    db.session.delete(del_grade)
+    db.session.commit()
+
+    return render_template("delete_grade.html", delete_success=True)
 
 
 # Models
