@@ -44,7 +44,9 @@
 				{% if current_user.is_authenticated %}
             </div>
             <div>
-                <a href="{{ url_for('assignment') }}">Return to Assignments</a>
+                <br> <a href="{{ url_for('student_grades', student_get_ID = grade_display.student_ID) }}">Return to this student's list of grades</a>
+                <br> <a href="{{ url_for('assignment_grades', assign_get_ID = grade_display.assignment_ID) }}">View all grades for this assignment</a>
+                <br>
                 {% if delete_success %}
                     <p>The grade was deleted successfully!</p>
                 {% elif delete_fail %}

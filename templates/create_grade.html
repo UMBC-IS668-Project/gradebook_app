@@ -45,7 +45,9 @@
 				{% if current_user.is_authenticated %}
             </div>
             <div>
-               <br> <a href="{{ url_for('assignment') }}">Return to Assignments</a>
+                <br> <a href="{{ url_for('student_grades', student_get_ID = student_display.student_ID) }}">Return to this student's list of grades</a>
+                <br> <a href="{{ url_for('assignment_grades', assign_get_ID = assignment_display.assignment_ID) }}">View all grades for this assignment</a>
+                <br>
                 {% if create_success %}
                     <p>The grade was added successfully!</p>
                 {% endif %}

@@ -45,14 +45,18 @@
 				{% if current_user.is_authenticated %}
             </div>
             <div>
-               <br> <a href="{{ url_for('assignment') }}">Return to Assignments</a>
-                {% if create_success %}
-                    <p>The grade was added successfully!</p>
+                <br> <a href="{{ url_for('student_grades', student_get_ID = grade_display.student_ID) }}">Return to this student's list of grades</a>
+                <br> <a href="{{ url_for('assignment_grades', assign_get_ID = grade_display.assignment_ID) }}">View all grades for this assignment</a>
+                <br>
+                {% if edit_success %}
+                    <p>The grade was edited successfully!</p>
+                {% elif edit_failure %}
+                    <p> The grade could not be edited!</p>
                 {% endif %}
                 {% if no_ID_error %}
                     <p>No IDs!</p>
 				{% endif %}
-                <p>Create a grade entry below:</p>
+                <p>Edit a grade entry below:</p>
                 <ul>
                     <li>Student ID: {{ grade_display.student_ID }}</li>
                     <li>Student Name: {{ grade_display.first_name }} {{ grade_display.last_name }}</li>
