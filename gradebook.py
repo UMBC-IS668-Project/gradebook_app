@@ -10,8 +10,8 @@ app = Flask(__name__)
 app.debug = True
 
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
-    username="flaskuser",
-    password="dersAGef3rover",
+    username="",
+    password="",
     hostname="127.0.0.1",
     databasename="gradebook",
 )
@@ -20,7 +20,7 @@ app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-app.secret_key = "un34dersAGef3roverhe35rald"
+app.secret_key = ""
 login_manager = LoginManager()
 login_manager.init_app(app)
 migrate = Migrate(app, db)
