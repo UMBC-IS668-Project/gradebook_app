@@ -72,14 +72,18 @@ def create():
     if request.form.get("password") != request.form.get("password_confirm"):
         return render_template("create_login.html", password_error=True)
 
-    new_user = User()
-    new_user.user_name = request.form["username"]
-    new_user.password_hash = generate_password_hash(request.form["password"])
-    db.session.add(new_user)
-    db.session.commit()
+    #Possibly check https://stackoverflow.com/questions/16709638/checking-the-strength-of-a-password-how-to-check-conditions#32542964 for password complexity checking
 
-    login_user(new_user)
-    return render_template("create_login.html", account_success=True)
+    #Will not actually be letting accounts be created through pythonanywhere
+    #new_user = User()
+    #new_user.user_name = request.form["username"]
+    #new_user.password_hash = generate_password_hash(request.form["password"])
+    #db.session.add(new_user)
+    #db.session.commit()
+
+    #login_user(new_user)
+    #return render_template("create_login.html", account_success=True)
+    return render_template("create_login.html", account_success_not_enabled=True)
 
 
 @app.route("/logout/")
