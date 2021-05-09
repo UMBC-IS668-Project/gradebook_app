@@ -117,7 +117,29 @@ def student():
 @login_required
 def assignment():
     if request.method == "GET":
-        return render_template("assignments.html", assignment_display=Assignment.query.all())
+
+        grade_return_inner = db.session.query(
+            Student.student_ID,
+            Student.first_name,
+            Student.last_name,
+            Grade.grade,
+            Grade.assignment_ID
+            ).select_from(Student).join(Grade, isouter=True).subquery()
+
+        grade_return = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name,
+            grade_return_inner.c.student_ID,
+            grade_return_inner.c.first_name,
+            grade_return_inner.c.last_name,
+            grade_return_inner.c.grade
+            ).select_from(Assignment).join(
+                grade_return_inner,
+                grade_return_inner.c.assignment_ID == Assignment.assignment_ID,
+                isouter=True)
+
+        return render_template("assignments.html", assignment_display=Assignment.query.all(),
+                               grade_display=grade_return)
     else:
         return redirect(url_for("index"))
 
