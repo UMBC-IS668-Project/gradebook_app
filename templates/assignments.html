@@ -64,6 +64,7 @@
 							<tr>
 								<td>{{ assignment.assignment_ID }}</td>
 								<td>{{ assignment.assignment_name }}</td>
+								<td><a href = "{{ url_for('assignment_grades', assign_get_ID = assignment.assignment_ID)}}">Grades</a></td>
 								<td><a href="{{ url_for('edit_assignment', edit_ID = assignment.assignment_ID) }}">Edit</a></td>
 								<td><a href = "{{ url_for('delete_assignment' ,delete_ID = assignment.assignment_ID) }}">Delete</a></td>
 								<td><a href="#assignment{{ assignment.assignment_ID }}" data-toggle="collapse">Show/Hide grades</a></td>

@@ -13,7 +13,7 @@ app.debug = True
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username="",
     password="",
-    hostname=""127.0.0.1"",
+    hostname="",
     databasename="",
 )
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
@@ -100,7 +100,7 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
-
+#Possibly run a new query when show/hide grades is pressed?
 @app.route("/students/", methods=["GET"])
 @login_required
 def student():
@@ -210,6 +210,34 @@ def assignment():
 
         return render_template("assignments.html", assignment_display=Assignment.query.all(),
                                grade_display=grade_return)
+    else:
+        return redirect(url_for("index"))
+
+
+@app.route("/assignment_grades/<assign_get_ID>", methods=["GET"])
+@login_required
+def assignment_grades(assign_get_ID= None):
+    if request.method == "GET":
+        grade_return_inner = db.session.query(Student.student_ID, Grade.grade, Assignment.assignment_ID,
+            Assignment.assignment_name).select_from(Student).join(Grade).\
+            join(Assignment).filter_by(assignment_ID=assign_get_ID).subquery()
+
+        assign_get = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name
+            ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
+
+        grade_return = db.session.query(
+            grade_return_inner.c.assignment_ID,
+            grade_return_inner.c.assignment_name,
+            grade_return_inner.c.grade,
+            Student.student_ID,
+            Student.first_name,
+            Student.last_name
+            ).select_from(Student).join(grade_return_inner, grade_return_inner.c.student_ID ==
+                Student.student_ID, isouter=True).order_by(Student.first_name)
+
+        return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=assign_get)
     else:
         return redirect(url_for("index"))
 
