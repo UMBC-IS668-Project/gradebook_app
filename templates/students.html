@@ -71,6 +71,7 @@
 								<td>{{ student.email_address }}</td>
 								<td>{{ student.major }}</td>
 								<td>{{ student.agg_grade }}</td>
+								<td><a href="{{ url_for('student_grades', student_get_ID = student.student_ID) }}">Grades</a></td>
 								<td><a href="{{ url_for('edit_student', edit_ID = student.student_ID) }}">Edit</a></td>
 								<td><a href = "{{ url_for('delete_student' ,delete_ID = student.student_ID) }}">Delete</a></td>
 								<td><a href="#student{{ student.student_ID }}" data-toggle="collapse">Show/Hide grades</a></td>

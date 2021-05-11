@@ -13,7 +13,7 @@ app.debug = True
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username="",
     password="",
-    hostname="",
+    hostname=""127.0.0.1"",
     databasename="",
 )
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
@@ -131,6 +131,8 @@ def student():
                 student_return_inner.c.student_ID == Student.student_ID, isouter=True).join(grade_return_inner,
             grade_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
+        assignment_return=Assignment.query.all()
+
         #student_return = db.session.query(
         #   Student.student_ID,
         #    Student.first_name,
@@ -140,7 +142,43 @@ def student():
         #    student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
         #        student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
-        return render_template("students.html",  student_display=Student.query.all(), grade_display=student_return)
+        return render_template("students.html",  student_display=Student.query.all(), grade_display=student_return, assignment_display= assignment_return)
+    else:
+        return redirect(url_for("index"))
+
+
+@app.route("/student_grades/<student_get_ID>", methods=["GET"])
+@login_required
+def student_grades(student_get_ID= None):
+    if request.method == "GET":
+        grade_return_inner = db.session.query(
+            Student.first_name,
+            Student.last_name,
+            Grade.student_ID,
+            Grade.assignment_ID,
+            Grade.grade).select_from(Student).join(
+            Grade, isouter=True).filter(
+            Grade.student_ID == student_get_ID).subquery()
+
+        grade_return = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name,
+            grade_return_inner.c.student_ID,
+            grade_return_inner.c.grade,
+            grade_return_inner.c.first_name,
+            grade_return_inner.c.last_name
+            ).select_from(Assignment).join(
+            grade_return_inner, grade_return_inner.c.assignment_ID == Assignment.assignment_ID, isouter=True)
+
+        student_get = db.session.query(
+                Student.student_ID,
+                Student.first_name,
+                Student.last_name,
+                Student.major,
+                Student.email_address
+                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
+
+        return render_template("student_grades.html", grade_display=grade_return, student_display=student_get)
     else:
         return redirect(url_for("index"))
 
