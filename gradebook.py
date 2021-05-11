@@ -1,10 +1,11 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, json
 from flask_login import login_user, LoginManager, UserMixin, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from mysql import connector
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
 app.debug = True
@@ -12,8 +13,8 @@ app.debug = True
 SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
     username="",
     password="",
-    hostname="127.0.0.1",
-    databasename="gradebook",
+    hostname="",
+    databasename="",
 )
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
@@ -62,15 +63,22 @@ def create():
     if request.method == "GET":
         return render_template("create_login.html", error=False)
 
+    # If post...
+
+    # Check if the form has been filled out
+    for i in request.form:
+        if request.form[i] is None or request.form[i] == "":
+            return render_template("create.html", message="The form must be filled out!")
+
     if current_user.is_authenticated:
-        return render_template("create_login.html", current_user_error=True)
+        return render_template("create_login.html", message="You are already logged in!")
 
     user = load_user(request.form["username"])
     if user:
-        return render_template("create_login.html", duplicate_user_error=True)
+        return render_template("create_login.html", message="Choose a different username!")
 
     if request.form.get("password") != request.form.get("password_confirm"):
-        return render_template("create_login.html", password_error=True)
+        return render_template("create_login.html", message="Your passwords did not match!")
 
     #Possibly check https://stackoverflow.com/questions/16709638/checking-the-strength-of-a-password-how-to-check-conditions#32542964 for password complexity checking
 
@@ -82,8 +90,8 @@ def create():
     #db.session.commit()
 
     #login_user(new_user)
-    #return render_template("create_login.html", account_success=True)
-    return render_template("create_login.html", account_success_not_enabled=True)
+    #return render_template("create_login.html", message="Your account has been created!")
+    return render_template("create_login.html", message="This feature has not been enabled for PythonAnywhere!")
 
 
 @app.route("/logout/")
@@ -154,6 +162,20 @@ def create_student():
     if request.method == "GET":
         return render_template("create_student.html")
 
+    # Check if the form has been filled out.
+    for i in request.form:
+        if request.form[i] is None or request.form[i] == "":
+            return render_template("create_student.html", message="The form must be filled out!")
+
+    # Check if the student has been entered already
+    student_check = Student.query.filter_by(
+        first_name=request.form["first_name"].lower(),
+        last_name=request.form["last_name"].lower(),
+        email_address=request.form["email_address"].lower()).first()
+
+    if student_check is not None:
+        return render_template("create_student.html", message="This entry already exists!")
+
     new_student = Student()
     new_student.first_name = request.form["first_name"]
     new_student.last_name = request.form["last_name"]
@@ -162,7 +184,7 @@ def create_student():
     db.session.add(new_student)
     db.session.commit()
 
-    return render_template("create_student.html", create_success=True)
+    return render_template("create_student.html", message="The student was added successfully!")
 
 
 @app.route("/edit_student/", methods=["GET"])
@@ -184,7 +206,7 @@ def edit_student(edit_ID=None):
 
     ed_student = Student.query.filter_by(student_ID=edit_ID).first()
     if ed_student is None:
-        return render_template("edit_student.html", edit_fail=True)
+        return render_template("edit_student.html", message="Nothing to edit!")
 
     ed_student.first_name = request.form["first_name"]
     ed_student.last_name = request.form["last_name"]
@@ -193,10 +215,10 @@ def edit_student(edit_ID=None):
     db.session.add(ed_student)
     db.session.commit()
 
-    return render_template("edit_student.html", edit_success=True)
+    return render_template("edit_student.html", message="The student was edited successfully!")
 
 
-@app.route("/delete_student/", methods=["GET", "POST"])
+#@app.route("/delete_student/", methods=["GET", "POST"])
 @app.route("/delete_student/<delete_ID>", methods=["GET", "POST", "DELETE"])
 @login_required
 def delete_student(delete_ID=None):
@@ -216,40 +238,11 @@ def delete_student(delete_ID=None):
 
     del_student = Student.query.filter_by(student_ID=delete_ID).first()
     if del_student is None:
-        return render_template("delete_student.html", delete_fail=True)
+        return render_template("delete_student.html", message="Nothing to delete!")
     db.session.delete(del_student)
     db.session.commit()
 
-    return render_template("delete_student.html", delete_success=True)
-
-
-@app.route("/assignment_grades/", methods=["GET"])
-@app.route("/assignment_grades/<assign_get_ID>", methods=["GET"])
-@login_required
-def assignment_grades(assign_get_ID= None):
-    if request.method == "GET":
-        grade_return_inner = db.session.query(Student.student_ID, Grade.grade, Assignment.assignment_ID,
-            Assignment.assignment_name).select_from(Student).join(Grade).\
-            join(Assignment).filter_by(assignment_ID=assign_get_ID).subquery()
-
-        assign_get = db.session.query(
-            Assignment.assignment_ID,
-            Assignment.assignment_name
-            ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
-
-        grade_return = db.session.query(
-            grade_return_inner.c.assignment_ID,
-            grade_return_inner.c.assignment_name,
-            grade_return_inner.c.grade,
-            Student.student_ID,
-            Student.first_name,
-            Student.last_name
-            ).select_from(Student).join(grade_return_inner, grade_return_inner.c.student_ID ==
-                Student.student_ID, isouter=True).order_by(Student.first_name)
-
-        return render_template("assignment_grades.html", grade_display=grade_return, grade_assignment=assign_get)
-    else:
-        return redirect(url_for("index"))
+    return render_template("delete_student.html", message="The student was deleted successfully!")
 
 
 @app.route("/create_assignment/", methods=["GET", "POST"])
@@ -258,15 +251,27 @@ def create_assignment():
     if request.method == "GET":
         return render_template("create_assignment.html")
 
+    # If post...
+
+    # Check if anything has been entered.
+    for i in request.form:
+        if request.form[i] is None or request.form[i] == "":
+            return render_template("create_assignment.html", message="The form must be filled out!")
+
+    # Check if an assignment with a matching name exists
+    assignment_check = Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
+    if assignment_check is not None:
+        return render_template("create_assignment.html", message="There is already an assignment with this name!")
+
     new_assignment = Assignment()
     new_assignment.assignment_name = request.form["assignment_name"]
     db.session.add(new_assignment)
     db.session.commit()
 
-    return render_template("create_assignment.html", create_success=True)
+    return render_template("create_assignment.html", message="The assignment was added successfully!")
 
 
-@app.route("/edit_assignment/", methods=["GET", "POST"])
+# @app.route("/edit_assignment/", methods=["GET", "POST"])
 @app.route("/edit_assignment/<int:edit_ID>", methods=["GET", "POST", "PUT"])
 @login_required
 def edit_assignment(edit_ID=None):
@@ -281,15 +286,21 @@ def edit_assignment(edit_ID=None):
         else:
             return render_template("edit_assignment.html", assignment_display="")
 
+    # Check if the assignment exists
     ed_assignment = Assignment.query.filter_by(assignment_ID=edit_ID).first()
     if ed_assignment is None:
-        return render_template("edit_assignment.html", edit_fail=True)
+        return render_template("edit_assignment.html", message="Nothing to edit!")
+
+    # Check if the new assignment name is a duplicate
+    assignment_check = Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
+    if assignment_check is not None:
+        return render_template("create_assignment.html", message="There is already an assignment with this name!")
 
     ed_assignment.assignment_name = request.form["assignment_name"]
     db.session.add(ed_assignment)
     db.session.commit()
 
-    return render_template("edit_assignment.html", edit_success=True)
+    return render_template("edit_assignment.html", message="The entry has been edited successfully")
 
 
 @app.route("/delete_assignment/", methods=["GET", "POST"])
@@ -309,11 +320,11 @@ def delete_assignment(delete_ID=None):
 
     del_assignment = Assignment.query.filter_by(assignment_ID=delete_ID).first()
     if del_assignment is None:
-        return render_template("delete_assignment.html", delete_fail=True)
+        return render_template("delete_assignment.html", message="Nothing to delete!")
     db.session.delete(del_assignment)
     db.session.commit()
 
-    return render_template("delete_assignment.html", delete_success=True)
+    return render_template("delete_assignment.html", message="The assignment was deleted successfully!")
 
 
 @app.route("/student_grades/", methods=["GET"])
@@ -353,9 +364,8 @@ def student_grades(student_get_ID= None):
         return redirect(url_for("index"))
 
 
-@app.route("/create_grade/", methods=["GET"])
 @app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
-def create_grade(assign_get_ID=None, student_get_ID=None, message=None):
+def create_grade(assign_get_ID=None, student_get_ID=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
             assign_return = db.session.query(
@@ -368,13 +378,37 @@ def create_grade(assign_get_ID=None, student_get_ID=None, message=None):
                 Student.first_name,
                 Student.last_name
                 ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
-            if message == "success":
-                return render_template("create_grade.html", assignment_display=assign_return,
-                                       student_display=student_return, create_success=True)
+
             return render_template("create_grade.html", assignment_display=assign_return,
                                    student_display=student_return)
         else:
-            return render_template("create_grade.html", assignment_display="", student_display="", no_ID_error=True)
+            return render_template("create_grade.html", assignment_display="", student_display="",
+                                   message="Nothing to delete!")
+
+    # If post...
+
+    assign_return = db.session.query(
+        Assignment.assignment_ID,
+        Assignment.assignment_name,
+    ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
+
+    student_return = db.session.query(
+        Student.student_ID,
+        Student.first_name,
+        Student.last_name
+    ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
+
+    # Check if the form has been filled out
+    for i in request.form:
+        if request.form[i] is None or request.form[i] == "":
+            return render_template("create_grade.html", assignment_display=assign_return,
+                                   student_display=student_return, message="The form must be filled out!")
+
+    # Check if there is already a matching grade entry
+    grade_check = Grade.query.filter_by(assignment_ID=assign_get_ID,
+                                        student_ID=student_get_ID).first()
+    if grade_check is not None:
+        return render_template("create_grade.html", message="There is already a grade entry!")
 
     new_grade = Grade()
     new_grade.grade = request.form["grade"]
@@ -383,11 +417,11 @@ def create_grade(assign_get_ID=None, student_get_ID=None, message=None):
     db.session.add(new_grade)
     db.session.commit()
 
-    return redirect(url_for("create_grade", assign_get_ID=assign_get_ID, student_get_ID=student_get_ID, message="success"))
+    return render_template("create_grade.html", assignment_display=assign_return,
+                           student_display=student_return, message="The grade was added successfully!")
 
 
 @app.route("/edit_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST", "PUT"])
-@app.route("/edit_grade/<assign_get_ID>/<student_get_ID>/<edit_message>", methods=["GET", "POST", "PUT"])
 def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
@@ -402,21 +436,36 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
                                                  Grade.student_ID == student_get_ID,
                                                  Grade.student_ID == Student.student_ID,
                                                  Grade.assignment_ID == Assignment.assignment_ID).first()
-            if message == "success":
-                return render_template("edit_grade.html", grade_display=grade_return, edit_success=True)
+
             return render_template("edit_grade.html", grade_display=grade_return)
         else:
-            return render_template("edit_grade.html", grade_display="", no_ID_error=True)
+            return render_template("edit_grade.html", grade_display="", message="No IDs!")
+
+    # If post...
+    grade_return = db.session.query(
+        Assignment.assignment_ID,
+        Assignment.assignment_name,
+        Grade.grade,
+        Student.student_ID,
+        Student.first_name,
+        Student.last_name
+    ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID,
+                                     Grade.student_ID == student_get_ID,
+                                     Grade.student_ID == Student.student_ID,
+                                     Grade.assignment_ID == Assignment.assignment_ID).first()
+
+    if request.form["grade"] is None or request.form["grade"] == "":
+        return render_template("edit_grade.html", grade_display=grade_return, message="A grade must be entered!")
 
     ed_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
     if ed_grade is None:
-        return render_template("edit_grade.html", edit_failure=True)
+        return render_template("edit_grade.html", message="The grade could not be edited!")
 
     ed_grade.grade = request.form["grade"]
     db.session.add(ed_grade)
     db.session.commit()
 
-    return redirect(url_for("edit_grade", assign_get_ID=assign_get_ID, student_get_ID=student_get_ID, message="success"))
+    return render_template("create_grade.html", grade_display=grade_return, message="The grade was edited successfully!")
 
 
 
