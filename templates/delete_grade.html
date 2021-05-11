@@ -44,16 +44,16 @@
 				{% if current_user.is_authenticated %}
             </div>
             <div>
-                <br> <a href="{{ url_for('student_grades', student_get_ID = grade_display.student_ID) }}">Return to this student's list of grades</a>
-                <br> <a href="{{ url_for('assignment_grades', assign_get_ID = grade_display.assignment_ID) }}">View all grades for this assignment</a>
-                <br>
-                {% if delete_success %}
-                    <p>The grade was deleted successfully!</p>
-                {% elif delete_fail %}
-                    <p>Nothing to delete!</p>
-				{% else %}
-				    <p>Delete the grade entry below:</p>
-				{% endif %}
+                <br><a href="{{ url_for('student') }}">View Students</a>
+                <br><a href="{{ url_for('assignment') }}">View Assignments</a>
+
+                    {% if message %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <p>Delete the grade entry below:</p>
+                    {% endif %}
             </div>
             {% if not grade_display %}
                 <br>

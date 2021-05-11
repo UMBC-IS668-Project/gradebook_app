@@ -105,6 +105,13 @@ def logout():
 @login_required
 def student():
     if request.method == "GET":
+        grade_return_inner = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name,
+            Grade.student_ID,
+            Grade.grade,
+            ).select_from(Assignment).join(Grade, isouter=True).subquery()
+
         # Subquery to get aggregate grade for students, assuming equal weighting.
         student_return_inner = db.session.query(
             Student.student_ID,
@@ -117,10 +124,23 @@ def student():
             Student.last_name,
             Student.major,
             Student.email_address,
+            grade_return_inner.c.assignment_ID,
+            grade_return_inner.c.assignment_name,
+            grade_return_inner.c.grade,
             student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
-                student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
+                student_return_inner.c.student_ID == Student.student_ID, isouter=True).join(grade_return_inner,
+            grade_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
-        return render_template("students.html", student_display=student_return)
+        #student_return = db.session.query(
+        #   Student.student_ID,
+        #    Student.first_name,
+        #    Student.last_name,
+        #    Student.major,
+        #    Student.email_address,
+        #    student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
+        #        student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
+
+        return render_template("students.html",  student_display=Student.query.all(), grade_display=student_return)
     else:
         return redirect(url_for("index"))
 
@@ -187,7 +207,6 @@ def create_student():
     return render_template("create_student.html", message="The student was added successfully!")
 
 
-@app.route("/edit_student/", methods=["GET"])
 @app.route("/edit_student/<int:edit_ID>", methods=["GET", "PUT", "POST"])
 @login_required
 def edit_student(edit_ID=None):
@@ -218,7 +237,6 @@ def edit_student(edit_ID=None):
     return render_template("edit_student.html", message="The student was edited successfully!")
 
 
-#@app.route("/delete_student/", methods=["GET", "POST"])
 @app.route("/delete_student/<delete_ID>", methods=["GET", "POST", "DELETE"])
 @login_required
 def delete_student(delete_ID=None):
@@ -252,7 +270,6 @@ def create_assignment():
         return render_template("create_assignment.html")
 
     # If post...
-
     # Check if anything has been entered.
     for i in request.form:
         if request.form[i] is None or request.form[i] == "":
@@ -271,7 +288,6 @@ def create_assignment():
     return render_template("create_assignment.html", message="The assignment was added successfully!")
 
 
-# @app.route("/edit_assignment/", methods=["GET", "POST"])
 @app.route("/edit_assignment/<int:edit_ID>", methods=["GET", "POST", "PUT"])
 @login_required
 def edit_assignment(edit_ID=None):
@@ -303,7 +319,6 @@ def edit_assignment(edit_ID=None):
     return render_template("edit_assignment.html", message="The entry has been edited successfully")
 
 
-@app.route("/delete_assignment/", methods=["GET", "POST"])
 @app.route("/delete_assignment/<delete_ID>", methods=["GET", "POST", "DELETE"])
 @login_required
 def delete_assignment(delete_ID=None):
@@ -325,43 +340,6 @@ def delete_assignment(delete_ID=None):
     db.session.commit()
 
     return render_template("delete_assignment.html", message="The assignment was deleted successfully!")
-
-
-@app.route("/student_grades/", methods=["GET"])
-@app.route("/student_grades/<student_get_ID>", methods=["GET"])
-@login_required
-def student_grades(student_get_ID= None):
-    if request.method == "GET":
-        grade_return_inner = db.session.query(
-            Student.first_name,
-            Student.last_name,
-            Grade.student_ID,
-            Grade.assignment_ID,
-            Grade.grade).select_from(Student).join(
-            Grade, isouter=True).filter(
-            Grade.student_ID == student_get_ID).subquery()
-
-        grade_return = db.session.query(
-            Assignment.assignment_ID,
-            Assignment.assignment_name,
-            grade_return_inner.c.student_ID,
-            grade_return_inner.c.grade,
-            grade_return_inner.c.first_name,
-            grade_return_inner.c.last_name
-            ).select_from(Assignment).join(
-            grade_return_inner, grade_return_inner.c.assignment_ID == Assignment.assignment_ID, isouter=True)
-
-        student_get = db.session.query(
-                Student.student_ID,
-                Student.first_name,
-                Student.last_name,
-                Student.major,
-                Student.email_address
-                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
-
-        return render_template("student_grades.html", grade_display=grade_return, student_display=student_get)
-    else:
-        return redirect(url_for("index"))
 
 
 @app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
@@ -468,8 +446,6 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
     return render_template("create_grade.html", grade_display=grade_return, message="The grade was edited successfully!")
 
 
-
-@app.route("/delete_grade/", methods=["GET", "POST"])
 @app.route("/delete_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST", "DELETE"])
 @login_required
 def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
@@ -484,21 +460,21 @@ def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
                 Student.last_name
                 ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID,
                                                  Student.student_ID == student_get_ID).first()
-            if message == "success":
-                return render_template("delete_grade.html", grade_display=grade_return, delete_success=True)
 
             return render_template("delete_grade.html", grade_display=grade_return)
 
         else:
-            return render_template("delete_grade.html", grade_display="", no_ID_error=True)
+            return render_template("delete_grade.html", grade_display="", message="No IDs!")
+
+    # If post...
 
     del_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
     if del_grade is None:
-        return render_template("delete_assignment.html", delete_fail=True)
+        return render_template("delete_assignment.html", message="The entry could not be found to be deleted!")
     db.session.delete(del_grade)
     db.session.commit()
 
-    return redirect(url_for("delete_grade", assign_get_ID=assign_get_ID, student_get_ID=student_get_ID, message="success"))
+    return render_template("delete_grade.html", grade_display=del_grade, message="The grade has been deleted!")
 
 
 # Models
