@@ -28,13 +28,13 @@ migrate = Migrate(app, db)
 
 
 @login_manager.user_loader
-def load_user(entered_name):
-    return User.query.filter_by(user_name=entered_name).first()
+async def load_user(entered_name):
+    return await User.query.filter_by(user_name=entered_name).first()
 
 
 # Routes
 @app.route("/", methods=["GET", "POST"])
-def index():
+async def index():
     if request.method == "GET":
         return render_template("main_page.html")
     if not current_user.is_authenticated:
@@ -43,7 +43,7 @@ def index():
 
 
 @app.route("/login/", methods=["GET", "POST"])
-def login():
+async def login():
     if request.method == "GET":
         return render_template("login_page.html", error=False)
 
@@ -59,7 +59,7 @@ def login():
 
 
 @app.route("/create/", methods=["GET", "POST"])
-def create():
+async def create():
     if request.method == "GET":
         return render_template("create_login.html", error=False)
 
@@ -96,16 +96,16 @@ def create():
 
 @app.route("/logout/")
 @login_required
-def logout():
+async def logout():
     logout_user()
     return redirect(url_for("index"))
 
 #Possibly run a new query when show/hide grades is pressed?
 @app.route("/students/", methods=["GET"])
 @login_required
-def student():
+async def student():
     if request.method == "GET":
-        grade_return_inner = db.session.query(
+        grade_return_inner = await db.session.query(
             Assignment.assignment_ID,
             Assignment.assignment_name,
             Grade.student_ID,
@@ -113,12 +113,12 @@ def student():
             ).select_from(Assignment).join(Grade, isouter=True).subquery()
 
         # Subquery to get aggregate grade for students, assuming equal weighting.
-        student_return_inner = db.session.query(
+        student_return_inner = await db.session.query(
             Student.student_ID,
             (db.func.round((db.func.sum(Grade.grade)/db.func.count(Grade.grade)),3)).label(
              "agg_grade")).select_from(Student).join(Grade).group_by(Student.student_ID).subquery()
 
-        student_return = db.session.query(
+        student_return = await db.session.query(
             Student.student_ID,
             Student.first_name,
             Student.last_name,
@@ -131,9 +131,9 @@ def student():
                 student_return_inner.c.student_ID == Student.student_ID, isouter=True).join(grade_return_inner,
             grade_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
-        assignment_return=Assignment.query.all()
+        assignment_return= await Assignment.query.all()
 
-        #student_return = db.session.query(
+        #student_return = await db.session.query(
         #   Student.student_ID,
         #    Student.first_name,
         #    Student.last_name,
@@ -142,16 +142,20 @@ def student():
         #    student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
         #        student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
-        return render_template("students.html",  student_display=Student.query.all(), grade_display=student_return, assignment_display= assignment_return)
+        return render_template(
+            "students.html",
+            student_display= await Student.query.all(),
+            grade_display=student_return,
+            assignment_display= assignment_return)
     else:
         return redirect(url_for("index"))
 
 
 @app.route("/student_grades/<student_get_ID>", methods=["GET"])
 @login_required
-def student_grades(student_get_ID= None):
+async def student_grades(student_get_ID= None):
     if request.method == "GET":
-        grade_return_inner = db.session.query(
+        grade_return_inner = await db.session.query(
             Student.first_name,
             Student.last_name,
             Grade.student_ID,
@@ -160,7 +164,7 @@ def student_grades(student_get_ID= None):
             Grade, isouter=True).filter(
             Grade.student_ID == student_get_ID).subquery()
 
-        grade_return = db.session.query(
+        grade_return = await db.session.query(
             Assignment.assignment_ID,
             Assignment.assignment_name,
             grade_return_inner.c.student_ID,
@@ -170,7 +174,7 @@ def student_grades(student_get_ID= None):
             ).select_from(Assignment).join(
             grade_return_inner, grade_return_inner.c.assignment_ID == Assignment.assignment_ID, isouter=True)
 
-        student_get = db.session.query(
+        student_get = await db.session.query(
                 Student.student_ID,
                 Student.first_name,
                 Student.last_name,
@@ -185,10 +189,10 @@ def student_grades(student_get_ID= None):
 
 @app.route("/assignments/", methods=["GET"])
 @login_required
-def assignment():
+async def assignment():
     if request.method == "GET":
 
-        grade_return_inner = db.session.query(
+        grade_return_inner = await db.session.query(
             Student.student_ID,
             Student.first_name,
             Student.last_name,
@@ -196,7 +200,7 @@ def assignment():
             Grade.assignment_ID
             ).select_from(Student).join(Grade, isouter=True).subquery()
 
-        grade_return = db.session.query(
+        grade_return = await db.session.query(
             Assignment.assignment_ID,
             Assignment.assignment_name,
             grade_return_inner.c.student_ID,
@@ -208,26 +212,28 @@ def assignment():
                 grade_return_inner.c.assignment_ID == Assignment.assignment_ID,
                 isouter=True)
 
-        return render_template("assignments.html", assignment_display=Assignment.query.all(),
-                               grade_display=grade_return)
+        return render_template(
+            "assignments.html",
+            assignment_display=await Assignment.query.all(),
+            grade_display=grade_return)
     else:
         return redirect(url_for("index"))
 
 
 @app.route("/assignment_grades/<assign_get_ID>", methods=["GET"])
 @login_required
-def assignment_grades(assign_get_ID= None):
+async def assignment_grades(assign_get_ID= None):
     if request.method == "GET":
-        grade_return_inner = db.session.query(Student.student_ID, Grade.grade, Assignment.assignment_ID,
+        grade_return_inner = await db.session.query(Student.student_ID, Grade.grade, Assignment.assignment_ID,
             Assignment.assignment_name).select_from(Student).join(Grade).\
             join(Assignment).filter_by(assignment_ID=assign_get_ID).subquery()
 
-        assign_get = db.session.query(
+        assign_get = await db.session.query(
             Assignment.assignment_ID,
             Assignment.assignment_name
             ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
 
-        grade_return = db.session.query(
+        grade_return = await db.session.query(
             grade_return_inner.c.assignment_ID,
             grade_return_inner.c.assignment_name,
             grade_return_inner.c.grade,
@@ -244,7 +250,7 @@ def assignment_grades(assign_get_ID= None):
 
 @app.route("/create_student/", methods=["GET", "POST"])
 @login_required
-def create_student():
+async def create_student():
     if request.method == "GET":
         return render_template("create_student.html")
 
@@ -254,7 +260,7 @@ def create_student():
             return render_template("create_student.html", message="The form must be filled out!")
 
     # Check if the student has been entered already
-    student_check = Student.query.filter_by(
+    student_check = await Student.query.filter_by(
         first_name=request.form["first_name"].lower(),
         last_name=request.form["last_name"].lower(),
         email_address=request.form["email_address"].lower()).first()
@@ -275,10 +281,10 @@ def create_student():
 
 @app.route("/edit_student/<int:edit_ID>", methods=["GET", "PUT", "POST"])
 @login_required
-def edit_student(edit_ID=None):
+async def edit_student(edit_ID=None):
     if request.method == "GET":
         if edit_ID is not None:
-            student_return = db.session.query(
+            student_return = await db.session.query(
                 Student.student_ID,
                 Student.first_name,
                 Student.last_name,
@@ -289,7 +295,7 @@ def edit_student(edit_ID=None):
         else:
             return render_template("edit_student.html", student_display="")
 
-    ed_student = Student.query.filter_by(student_ID=edit_ID).first()
+    ed_student = await Student.query.filter_by(student_ID=edit_ID).first()
     if ed_student is None:
         return render_template("edit_student.html", message="Nothing to edit!")
 
@@ -305,10 +311,10 @@ def edit_student(edit_ID=None):
 
 @app.route("/delete_student/<delete_ID>", methods=["GET", "POST", "DELETE"])
 @login_required
-def delete_student(delete_ID=None):
+async def delete_student(delete_ID=None):
     if request.method == "GET":
         if delete_ID is not None:
-            student_return = db.session.query(
+            student_return = await db.session.query(
                 Student.student_ID,
                 Student.first_name,
                 Student.last_name,
@@ -320,7 +326,7 @@ def delete_student(delete_ID=None):
         else:
             return render_template("delete_student.html", student_display="")
 
-    del_student = Student.query.filter_by(student_ID=delete_ID).first()
+    del_student = await Student.query.filter_by(student_ID=delete_ID).first()
     if del_student is None:
         return render_template("delete_student.html", message="Nothing to delete!")
     db.session.delete(del_student)
@@ -331,7 +337,7 @@ def delete_student(delete_ID=None):
 
 @app.route("/create_assignment/", methods=["GET", "POST"])
 @login_required
-def create_assignment():
+async def create_assignment():
     if request.method == "GET":
         return render_template("create_assignment.html")
 
@@ -342,7 +348,7 @@ def create_assignment():
             return render_template("create_assignment.html", message="The form must be filled out!")
 
     # Check if an assignment with a matching name exists
-    assignment_check = Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
+    assignment_check = await Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
     if assignment_check is not None:
         return render_template("create_assignment.html", message="There is already an assignment with this name!")
 
@@ -356,10 +362,10 @@ def create_assignment():
 
 @app.route("/edit_assignment/<int:edit_ID>", methods=["GET", "POST", "PUT"])
 @login_required
-def edit_assignment(edit_ID=None):
+async def edit_assignment(edit_ID=None):
     if request.method == "GET":
         if edit_ID is not None:
-            assignment_return = db.session.query(
+            assignment_return = await db.session.query(
                 Assignment.assignment_ID,
                 Assignment.assignment_name
                 ).select_from(Assignment).filter(Assignment.assignment_ID == edit_ID).first()
@@ -369,12 +375,12 @@ def edit_assignment(edit_ID=None):
             return render_template("edit_assignment.html", assignment_display="")
 
     # Check if the assignment exists
-    ed_assignment = Assignment.query.filter_by(assignment_ID=edit_ID).first()
+    ed_assignment = await Assignment.query.filter_by(assignment_ID=edit_ID).first()
     if ed_assignment is None:
         return render_template("edit_assignment.html", message="Nothing to edit!")
 
     # Check if the new assignment name is a duplicate
-    assignment_check = Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
+    assignment_check = await Assignment.query.filter_by(assignment_name=request.form["assignment_name"]).first()
     if assignment_check is not None:
         return render_template("create_assignment.html", message="There is already an assignment with this name!")
 
@@ -387,10 +393,10 @@ def edit_assignment(edit_ID=None):
 
 @app.route("/delete_assignment/<delete_ID>", methods=["GET", "POST", "DELETE"])
 @login_required
-def delete_assignment(delete_ID=None):
+async def delete_assignment(delete_ID=None):
     if request.method == "GET":
         if delete_ID is not None:
-            assignment_return = db.session.query(
+            assignment_return = await db.session.query(
                 Assignment.assignment_ID,
                 Assignment.assignment_name).select_from(
                 Assignment).filter(Assignment.assignment_ID == delete_ID).first()
@@ -399,7 +405,7 @@ def delete_assignment(delete_ID=None):
         else:
             return render_template("delete_assignment.html", assignment_display="")
 
-    del_assignment = Assignment.query.filter_by(assignment_ID=delete_ID).first()
+    del_assignment = await Assignment.query.filter_by(assignment_ID=delete_ID).first()
     if del_assignment is None:
         return render_template("delete_assignment.html", message="Nothing to delete!")
     db.session.delete(del_assignment)
@@ -409,15 +415,15 @@ def delete_assignment(delete_ID=None):
 
 
 @app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
-def create_grade(assign_get_ID=None, student_get_ID=None):
+async def create_grade(assign_get_ID=None, student_get_ID=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
-            assign_return = db.session.query(
+            assign_return = await db.session.query(
                 Assignment.assignment_ID,
                 Assignment.assignment_name,
                 ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
 
-            student_return = db.session.query(
+            student_return = await db.session.query(
                 Student.student_ID,
                 Student.first_name,
                 Student.last_name
@@ -431,12 +437,12 @@ def create_grade(assign_get_ID=None, student_get_ID=None):
 
     # If post...
 
-    assign_return = db.session.query(
+    assign_return = await db.session.query(
         Assignment.assignment_ID,
         Assignment.assignment_name,
     ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
 
-    student_return = db.session.query(
+    student_return = await db.session.query(
         Student.student_ID,
         Student.first_name,
         Student.last_name
@@ -449,7 +455,7 @@ def create_grade(assign_get_ID=None, student_get_ID=None):
                                    student_display=student_return, message="The form must be filled out!")
 
     # Check if there is already a matching grade entry
-    grade_check = Grade.query.filter_by(assignment_ID=assign_get_ID,
+    grade_check = await Grade.query.filter_by(assignment_ID=assign_get_ID,
                                         student_ID=student_get_ID).first()
     if grade_check is not None:
         return render_template("create_grade.html", message="There is already a grade entry!")
@@ -466,10 +472,10 @@ def create_grade(assign_get_ID=None, student_get_ID=None):
 
 
 @app.route("/edit_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST", "PUT"])
-def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
+async def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
-            grade_return = db.session.query(
+            grade_return = await db.session.query(
                 Assignment.assignment_ID,
                 Assignment.assignment_name,
                 Grade.grade,
@@ -486,7 +492,7 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
             return render_template("edit_grade.html", grade_display="", message="No IDs!")
 
     # If post...
-    grade_return = db.session.query(
+    grade_return = await db.session.query(
         Assignment.assignment_ID,
         Assignment.assignment_name,
         Grade.grade,
@@ -501,7 +507,7 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
     if request.form["grade"] is None or request.form["grade"] == "":
         return render_template("edit_grade.html", grade_display=grade_return, message="A grade must be entered!")
 
-    ed_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
+    ed_grade = await Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
     if ed_grade is None:
         return render_template("edit_grade.html", message="The grade could not be edited!")
 
@@ -514,10 +520,10 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
 
 @app.route("/delete_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST", "DELETE"])
 @login_required
-def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
+async def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
     if request.method == "GET":
         if assign_get_ID is not None and student_get_ID is not None:
-            grade_return = db.session.query(
+            grade_return = await db.session.query(
                 Assignment.assignment_ID,
                 Assignment.assignment_name,
                 Grade.grade,
@@ -534,7 +540,7 @@ def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
 
     # If post...
 
-    del_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
+    del_grade = await Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
     if del_grade is None:
         return render_template("delete_assignment.html", message="The entry could not be found to be deleted!")
     db.session.delete(del_grade)
@@ -550,10 +556,10 @@ class User(UserMixin, db.Model):
     user_name = db.Column(db.String(128))
     password_hash = db.Column(db.String(128))
 
-    def check_password(self, password):
+    async def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def get_id(self):
+    async def get_id(self):
         return self.user_name
 
 
