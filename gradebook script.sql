@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS assignment (
  -- CONSTRAINT enrollment_assignment_constraint
   -- FOREIGN KEY(offering_ID)
   -- REFERENCES course_offering(offering_ID)
-  -- ON DELETE NO ACTION
+ ON DELETE CASCADE
   -- ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS  grade (
  CONSTRAINT assignment_grade_constraint
   FOREIGN KEY(assignment_ID)
   REFERENCES  assignment(assignment_ID)
-  ON DELETE NO ACTION
+  ON DELETE CASCADE
   ON UPDATE NO ACTION,
  CONSTRAINT student_grade_constraint
   FOREIGN KEY(student_ID)
