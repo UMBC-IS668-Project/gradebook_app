@@ -64,7 +64,6 @@ def create():
         return render_template("create_login.html", error=False)
 
     # If post...
-
     # Check if the form has been filled out
     for i in request.form:
         if request.form[i] is None or request.form[i] == "":
@@ -99,7 +98,7 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
-#Possibly run a new query when show/hide grades is pressed?
+
 @app.route("/students/", methods=["GET"])
 @login_required
 def student():
@@ -313,7 +312,8 @@ def edit_student(edit_ID=None):
     db.session.add(ed_student)
     db.session.commit()
 
-    return render_template("edit_student.html", message="The student was edited successfully!")
+    return render_template("edit_student.html", student_display=ed_student,
+                           message="The student was edited successfully!")
 
 
 @app.route("/delete_student/<delete_ID>", methods=["GET", "POST", "DELETE"])
@@ -370,22 +370,18 @@ def create_assignment():
 @app.route("/edit_assignment/<int:edit_ID>", methods=["GET", "POST", "PUT"])
 @login_required
 def edit_assignment(edit_ID=None):
+    assignment_return = db.session.query(
+        Assignment.assignment_ID,
+        Assignment.assignment_name
+    ).select_from(Assignment).filter(Assignment.assignment_ID == edit_ID).first()
+
     if request.method == "GET":
         if edit_ID is not None:
-            assignment_return = db.session.query(
-                Assignment.assignment_ID,
-                Assignment.assignment_name
-                ).select_from(Assignment).filter(Assignment.assignment_ID == edit_ID).first()
-
             return render_template("edit_assignment.html", assignment_display=assignment_return)
         else:
             return render_template("edit_assignment.html", assignment_display="")
 
     # If post...
-    assignment_return = db.session.query(
-        Assignment.assignment_ID,
-        Assignment.assignment_name
-    ).select_from(Assignment).filter(Assignment.assignment_ID == edit_ID).first()
     # Validate input
 
     # Check if anything has been entered.
@@ -441,27 +437,6 @@ def delete_assignment(delete_ID=None):
 
 @app.route("/create_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST"])
 def create_grade(assign_get_ID=None, student_get_ID=None):
-    if request.method == "GET":
-        if assign_get_ID is not None and student_get_ID is not None:
-            assign_return = db.session.query(
-                Assignment.assignment_ID,
-                Assignment.assignment_name,
-                ).select_from(Assignment).filter(Assignment.assignment_ID == assign_get_ID).first()
-
-            student_return = db.session.query(
-                Student.student_ID,
-                Student.first_name,
-                Student.last_name
-                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
-
-            return render_template("create_grade.html", assignment_display=assign_return,
-                                   student_display=student_return)
-        else:
-            return render_template("create_grade.html", assignment_display="", student_display="",
-                                   message="Nothing to delete!")
-
-    # If post...
-
     assign_return = db.session.query(
         Assignment.assignment_ID,
         Assignment.assignment_name,
@@ -473,8 +448,16 @@ def create_grade(assign_get_ID=None, student_get_ID=None):
         Student.last_name
     ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
 
-    # Validate input
+    if request.method == "GET":
+        if assign_get_ID is not None and student_get_ID is not None:
+            return render_template("create_grade.html", assignment_display=assign_return,
+                                   student_display=student_return)
+        else:
+            return render_template("create_grade.html", assignment_display="", student_display="",
+                                   message="No IDs!")
 
+    # If post...
+    # Validate input
     # Check if the form has been filled out
     for i in request.form:
         if request.form[i] is None or request.form[i] == "":
@@ -487,6 +470,11 @@ def create_grade(assign_get_ID=None, student_get_ID=None):
     except ValueError:
         return render_template("create_grade.html", assignment_display=assign_return,
                                student_display=student_return, message="You must enter a number!")
+
+    # Make sure there is no whitespace
+    if " " in request.form["grade"]:
+        return render_template("create_grade.html", assignment_display=assign_return,
+                               student_display=student_return, message="No whitespace can be entered!")
 
     # Check if there is already a matching grade entry
     match_check = Grade.query.filter_by(assignment_ID=assign_get_ID,
@@ -539,6 +527,10 @@ def edit_grade(assign_get_ID=None, student_get_ID=None):
         float(request.form["grade"])
     except ValueError:
         return render_template("edit_grade.html", grade_display=grade_return, message="You must enter a number!")
+
+    # Make sure there is no whitespace
+    if " " in request.form["grade"]:
+        return render_template("edit_grade.html", grade_display=grade_return, message="No whitespace can be included!")
 
     # Get the grade entry, make sure it exists
     ed_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
