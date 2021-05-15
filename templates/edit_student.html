@@ -70,19 +70,19 @@
                 <form action="" method="POST">
                   <div class="form-group">
                     <label for="first_name">First Name:</label>
-                    <input class="form-control" id="first_name" name="first_name" value="{{ student_display.first_name }}">
+                    <input required class="form-control" id="first_name" name="first_name" value="{{ student_display.first_name }}">
                   </div>
                   <div class="form-group">
                     <label for="last_name">Last Name:</label>
-                    <input class="form-control" id="last_name" name="last_name" value="{{ student_display.last_name }}">
+                    <input required class="form-control" id="last_name" name="last_name" value="{{ student_display.last_name }}">
                   </div>
                   <div class="form-group">
                     <label for="email_address">Email Address:</label>
-                    <input class="form-control" id="email_address" name="email_address" value="{{ student_display.email_address }}">
+                    <input required class="form-control" id="email_address" name="email_address" value="{{ student_display.email_address }}">
                   </div>
                     <div class="form-group">
                     <label for="major">Major:</label>
-                    <input class="form-control" id="major" name="major" value="{{ student_display.major }}">
+                    <input required class="form-control" id="major" name="major" value="{{ student_display.major }}">
                   </div>
                   <button type="submit" class="btn btn-success" value="YES">Edit Student</button>
                     <a href="{{url_for('student')}}">Cancel</a>

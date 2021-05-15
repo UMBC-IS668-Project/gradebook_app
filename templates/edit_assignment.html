@@ -70,7 +70,7 @@
                 <form action="" method="POST">
                   <div class="form-group">
                     <label for="assignment_name">Assignment Name:</label>
-                    <input class="form-control" id="assignment_name" name="assignment_name" value="{{ assignment_display.assignment_name }}">
+                    <input required class="form-control" id="assignment_name" name="assignment_name" value="{{ assignment_display.assignment_name }}">
                   </div>
                   <button type="submit" class="btn btn-success" value="YES">Edit Assignment</button>
                     <a href="{{url_for('assignment')}}">Cancel</a>
