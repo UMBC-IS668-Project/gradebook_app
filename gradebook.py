@@ -82,16 +82,15 @@ def create():
 
     #Possibly check https://stackoverflow.com/questions/16709638/checking-the-strength-of-a-password-how-to-check-conditions#32542964 for password complexity checking
 
-    #Will not actually be letting accounts be created through pythonanywhere
-    #new_user = User()
-    #new_user.user_name = request.form["username"]
-    #new_user.password_hash = generate_password_hash(request.form["password"])
-    #db.session.add(new_user)
-    #db.session.commit()
+    new_user = User()
+    new_user.user_name = request.form["username"]
+    new_user.password_hash = generate_password_hash(request.form["password"])
+    db.session.add(new_user)
+    db.session.commit()
 
     #login_user(new_user)
-    #return render_template("create_login.html", message="Your account has been created!")
-    return render_template("create_login.html", message="This feature has not been enabled for PythonAnywhere!")
+    return render_template("create_login.html", message="Your account has been created!")
+    # return render_template("create_login.html", message="This feature has not been enabled for PythonAnywhere!")
 
 
 @app.route("/logout/")
