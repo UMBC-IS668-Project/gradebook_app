@@ -514,7 +514,7 @@ def edit_grade(assign_get_ID=None, student_get_ID=None, message=None):
     db.session.add(ed_grade)
     db.session.commit()
 
-    return render_template("create_grade.html", grade_display=grade_return, message="The grade was edited successfully!")
+    return render_template("edit_grade.html", grade_display=grade_return, message="The grade was edited successfully!")
 
 
 @app.route("/delete_grade/<assign_get_ID>/<student_get_ID>/", methods=["GET", "POST", "DELETE"])
@@ -541,7 +541,12 @@ def delete_grade(assign_get_ID=None, student_get_ID=None, message=None):
 
     del_grade = Grade.query.filter_by(assignment_ID=assign_get_ID, student_ID=student_get_ID).first()
     if del_grade is None:
-        return render_template("delete_assignment.html", message="The entry could not be found to be deleted!")
+        return render_template(
+            "delete_grade.html",
+            assignment_ID=assign_get_ID,
+            student_ID=student_get_ID,
+            message="The entry could not be found to be deleted!"
+        )
     db.session.delete(del_grade)
     db.session.commit()
 
