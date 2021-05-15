@@ -61,7 +61,7 @@ def login():
 @app.route("/create/", methods=["GET", "POST"])
 def create():
     if request.method == "GET":
-        return render_template("create_login.html", error=False)
+        return render_template("create_login.html")
 
     # If post...
     # Check if the form has been filled out
@@ -87,7 +87,7 @@ def create():
     db.session.add(new_user)
     db.session.commit()
 
-    #login_user(new_user)
+    login_user(new_user)
     return render_template("create_login.html", message="Your account has been created!")
     # return render_template("create_login.html", message="This feature has not been enabled for PythonAnywhere!")
 
