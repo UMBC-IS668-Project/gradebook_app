@@ -53,7 +53,6 @@
 
         <div class="container">
 			{% if current_user.is_authenticated %}
-			<a href="{{ url_for('assignment') }}">Return to Assignments</a>
             <div>
 				<br><p> Assignment Name: {{ grade_assignment.assignment_name }}</p><br>
                 {% if alert == "create_success" %}

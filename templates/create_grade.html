@@ -65,9 +65,6 @@
         <div class="container">
             {% if current_user.is_authenticated %}
             <div>
-                <br><a href="{{ url_for('student') }}">View Students</a>
-                <br><a href="{{ url_for('assignment') }}">View Assignments</a>
-
                     {% if message %}
                         <div class="alert alert-warning" role="alert">
                             {{ message }}
