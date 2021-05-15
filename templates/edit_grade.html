@@ -84,7 +84,11 @@
                 <form action="." method="POST">
                   <div class="form-group">
                     <label for="grade">{{ grade_display.first_name }}'s grade for {{ grade_display.assignment_name }}:</label>
-                    <input class="form-control" id="grade" name="grade" placeholder= {{ grade_display.grade }}>
+                      {% if new_grade %}
+                        <input class="form-control" id="grade" name="grade" value= {{ new_grade }}>
+                      {% else %}
+                    <input class="form-control" id="grade" name="grade" value= {{ grade_display.grade }}>
+                      {% endif %}
                   </div>
                   <button type="submit" class="btn btn-success">Enter Grade</button>
                 </form>
