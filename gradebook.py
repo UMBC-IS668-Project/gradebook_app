@@ -133,16 +133,21 @@ def student():
 
         assignment_return=Assignment.query.all()
 
-        #student_return = db.session.query(
-        #   Student.student_ID,
-        #    Student.first_name,
-        #    Student.last_name,
-        #    Student.major,
-        #    Student.email_address,
-        #    student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
-        #        student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
+        student_outer_return = db.session.query(
+           Student.student_ID,
+            Student.first_name,
+            Student.last_name,
+            Student.major,
+            Student.email_address,
+            student_return_inner.c.agg_grade).select_from(Student).join(student_return_inner,
+            student_return_inner.c.student_ID == Student.student_ID, isouter=True).order_by(Student.first_name)
 
-        return render_template("students.html",  student_display=Student.query.all(), grade_display=student_return, assignment_display= assignment_return)
+        return render_template(
+            "students.html",
+            student_display=student_outer_return,
+            grade_display=student_return,
+            assignment_display=assignment_return
+        )
     else:
         return redirect(url_for("index"))
 
