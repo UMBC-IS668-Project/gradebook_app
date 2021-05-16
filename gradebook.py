@@ -224,7 +224,12 @@ def assignment():
                 grade_return_inner.c.assignment_ID == Assignment.assignment_ID,
                 isouter=True)
 
-        return render_template("assignments.html", assignment_display=Assignment.query.all(),
+        assignment_return = db.session.query(
+            Assignment.assignment_ID,
+            Assignment.assignment_name
+        ).select_from(Assignment).order_by(Assignment.assignment_name)
+
+        return render_template("assignments.html", assignment_display=assignment_return,
                                grade_display=grade_return)
     else:
         return redirect(url_for("index"))
