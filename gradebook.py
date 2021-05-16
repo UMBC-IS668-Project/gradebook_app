@@ -5,7 +5,6 @@ from flask_login import login_user, LoginManager, UserMixin, logout_user, login_
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from mysql import connector
-from werkzeug.exceptions import HTTPException
 
 # Breadcrumb set up from https://usersnap.com/blog/breadcrumbs/
 
@@ -157,6 +156,7 @@ def student():
 @login_required
 def student_grades(student_get_ID= None):
     if request.method == "GET":
+
         grade_return_inner = db.session.query(
             Student.first_name,
             Student.last_name,
@@ -176,13 +176,23 @@ def student_grades(student_get_ID= None):
             ).select_from(Assignment).join(
             grade_return_inner, grade_return_inner.c.assignment_ID == Assignment.assignment_ID, isouter=True)
 
+        # Subquery to get aggregate grade for students, assuming equal weighting.
+        student_return_inner = db.session.query(
+            Student.student_ID,
+            (db.func.round((db.func.sum(Grade.grade)/db.func.count(Grade.grade)),3)).label(
+             "agg_grade")).select_from(Student).join(Grade).group_by(Student.student_ID).subquery()
+
         student_get = db.session.query(
                 Student.student_ID,
                 Student.first_name,
                 Student.last_name,
                 Student.major,
-                Student.email_address
-                ).select_from(Student).filter(Student.student_ID == student_get_ID).first()
+                Student.email_address,
+                student_return_inner.c.agg_grade
+                )\
+            .select_from(Student)\
+            .join(student_return_inner, student_return_inner.c.student_ID == Student.student_ID)\
+            .filter(Student.student_ID == student_get_ID).first()
 
         return render_template("student_grades.html", grade_display=grade_return, student_display=student_get)
     else:
